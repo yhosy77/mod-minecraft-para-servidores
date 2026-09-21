@@ -33,12 +33,12 @@ Actualmente, en muchos servidores medianos y pequeños, la moderación se realiz
 2. Los administradores anotan las sanciones en hojas de texto plano local, blocs de notas o mensajes dispersos.
 3. Las sanciones como baneos o mutes temporales se gestionan manualmente o con comandos nativos aislados (`/ban`, `/mute`), sin guardar un historial unificado vinculante.
 
-
+### 4. El Dolor
 * **Las faltas se olvidan:** Si un jugador rompe las reglas varias veces pero lo atienden administradores distintos, nadie sabe que es reincidente y termina recibiendo castigos leves una y otra vez.
 * **Mucho trabajo manual y desorden:** Anotar los baneos en notas sueltas, calcular a mano cuántos días dura un castigo y acordarse de quitarlo a tiempo quita mucho tiempo y da espacio a errores o injusticias.
 * **Los reportes se pierden:** Los usuarios reportan un problema pero no saben si se atendió, y los dueños del servidor no tienen forma de revisar si los administradores están haciendo bien su trabajo.
 
-### 5. Impacto de la Solución
+
 * **Técnico:** Reemplaza las notas sueltas por un sistema ordenado que guarda toda la información automáticamente y la mantiene a salvo sin perder datos si la aplicación se cierra.
 * **Económico:** Lleva un control claro de las compras de rangos y donaciones de los jugadores, evitando cobros duplicados o que se entreguen beneficios a la persona equivocada.
 * **Social:** Hace que el juego sea más justo para todos, ya que las sanciones se aplican con reglas claras y automáticas para evitar favoritismos, dando además segundas oportunidades con periodos de prueba a quienes apelan.
