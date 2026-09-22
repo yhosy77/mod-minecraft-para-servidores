@@ -1,7 +1,7 @@
 # Plantilla Propuesta:
 Descripción: **Esta es la plantilla que usaremos para los requerimientos**
 
-### Matriz de Requerimientos Funcionales (RF) y No Funcionales (RNF)
+### Matriz de Requerimientos Funcionales (RF)
 | ID | Descripción | Actor | Prioridad | Criterio de Aceptación Verificable |
 | :---: | :--- | :---: | :---: | :--- |
 | **RF-01** | El sistema debe permitir a un jugador enviar un reporte detallado contra otro jugador por conducta indebida. | Jugador | Alta | Permite ingresar el NickName del acusado y el motivo. El acusado debe existir en el sistema. No permite reportes vacíos ni auto-reportes.|
@@ -17,6 +17,9 @@ Descripción: **Esta es la plantilla que usaremos para los requerimientos**
 | **RF-11** | El sistema debe permitir al jugador subir a un rango gratuito si cumple el nivel o las monedas requeridas.| Jugador | Media | Para subir a Miembro se requiere nivel 10 o 500 monedas; si se usan monedas, se descuentan del saldo. No se puede subir a un rango exclusivo por esta vía. Si no cumple los requisitos, se muestra un mensaje con lo que le falta.|
 | **RF-12** |El sistema debe permitir al administrador registrar la compra de un rango exclusivo pagado fuera del sistema. | Admin | Baja | Se guarda la fecha, el valor y el rango comprado. Los rangos exclusivos solo dan beneficios cosméticos y `*nunca*` permisos de `*staff.*`|
 | **RF-13** |El sistema debe permitir registrar donaciones de un jugador sin que reciba recompensas a cambio. | Jugador | Baja | El monto debe ser mayor a cero. La donación no cambia el rango ni las monedas del jugador. El administrador puede consultar el total donado por periodo. |
+
+### Matriz de Requerimientos No Funcionales (RNF)
+| ID | Descripción | Actor | Prioridad | Criterio de Aceptación Verificable |
 | :---: | :--- | :---: | :---: | :--- |
 | **RNF-01** | La información debe guardarse en archivos planos entre ejecuciones. | Sistema | Alta |Al reiniciar, los jugadores, reportes y sanciones siguen disponibles. Si un archivo no existe, se crea sin error.|
 | **RNF-02** |Los formularios deben validar los datos y el sistema no debe cerrarse ante datos inválidos o archivos dañados. | Sistema | Alta | Ante un dato inválido se muestra un mensaje claro de qué se debe corregir. Una línea dañada en un archivo se omite y se informa al usuario.|
