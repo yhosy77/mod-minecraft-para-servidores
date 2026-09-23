@@ -7,3 +7,22 @@ De ahi se decidió mejor hacer un Mod para los servidores de minecraft
 Esto debido a que notamos una gran carencia en la administracion de los servidores al administrar los usuarios, prioridades, compras, baneos, etc.
 
 
+# DEC 001 - Cambio de Idea de Mod a Plugin.
+
+**Fecha:** 22-09-2026
+**Estado:** Aprobado.
+
+### Contexto: 
+El proyecto necesitaba reorganizar y redirigir su enfoque. Durante la primera reunión del grupo para debatir los puntos conceptuales del proyecto, se analizó que la decisión de crear un mod, siendo esta orientada a ser implementada en servidores públicos, por lo cual se tomó la decisión de cambiar la orientación del proyecto. 
+
+### Decisión:
+
+Cambiar la idea de desarrollar un Mod a desarrollar un Plugin que se pueda implementar desde Minecraft Vanilla, usando el ecosistema Paper/Spigot.
+
+### Razones:
+
+- Los Plugins están mas relacionados con la idea propuesta.
+- Simplificación en la conexión con internet del Mod.
+
+### Consecuencias: 
+El proyecto contará con un entorno de desarrollo creado en Gradle/Kotlin y desarrollada en java.
