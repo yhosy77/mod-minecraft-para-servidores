@@ -72,6 +72,7 @@ classDiagram
         -String motivo
         -EstadoReporte estado
         -String adminQueAtendio
+        -Date fechaCreacion
         +cambiarEstado(EstadoReporte nuevo) void
     }
     class EstadoReporte {
