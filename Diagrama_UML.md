@@ -10,7 +10,7 @@ classDiagram
         -int nivel
         -int monedas
         -Date fechaIngreso
-        -boolean sancionado
+        -boolean advertido
         +subirDeRangoGratuito() void
         +consultarHistorialSanciones() List~Sancion~
     }
@@ -42,6 +42,7 @@ classDiagram
         -Date fechaInicio
         -int duracionDias
         -String staffResponsable
+        -String idSancion
         -EstadoSancion estado
         +calcularFin() Date
         +estaVigente() boolean
@@ -90,6 +91,7 @@ classDiagram
         <<abstract>>
         -Date fecha
         -double monto
+        -String idTransaccion
         +registrar() void
     }
     class CompraRango {
@@ -117,7 +119,7 @@ classDiagram
         -List~Reporte~ reportes
         +recibirReporte(Reporte r) void
         +filtrarPorEstado(EstadoReporte e) List~Reporte~
-        +generarEstadisticas() String
+        +generarEstadisticas(Date ini, Date fin) String
     }
     class GestorEconomia {
         -List~Transaccion~ transacciones
