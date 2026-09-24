@@ -1,4 +1,4 @@
-# Skill Issue Admin - Mod de Gestión para Servidores de Minecraft
+# Skill Issue Admin - Plugin de Gestión para Servidores de Minecraft
 **Grupo:** POO-Error Capa 8
 
 # Nuevo nombre definitivo:
@@ -25,7 +25,7 @@ El proyecto se ubica en el dominio de la administración de **servidores multiju
 ### 2. Actores del Sistema
 * **Jugador (Player / User):** Usuario convencional del servidor. Puede jugar, interactuar y enviar reportes sobre infracciones cometidas por otros usuarios.
 * **Administrador / Moderador (Admin / Staff):** Encargado de mantener el orden, revisar la cola de reportes, aplicar/revocar sanciones (bans, mutes, advertencias) y asignar rangos.
-* **Sistema (Skill Issue Admin):** El mod en Java que procesa los comandos, valida las reglas de negocio, administra la persistencia de datos y ejecuta las restricciones automáticas.
+* **Sistema (Skill Issue Admin):** El plugin en Java que procesa los comandos, valida las reglas de negocio, administra la persistencia de datos y ejecuta las restricciones automáticas.
 
 ### 3. Proceso Actual (Cómo se hace hoy)
 Actualmente, en muchos servidores medianos y pequeños, la moderación se realiza mediante un parche de métodos manuales e ineficientes:
