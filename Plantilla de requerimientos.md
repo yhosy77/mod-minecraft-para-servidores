@@ -1,7 +1,9 @@
 # Plantilla Propuesta:
+## PASO 2: Requerimientos del Sistema
+
+### Matriz de Requerimientos Funcionales (RF) y No Funcionales (RNF)
 Descripción: **Esta es la plantilla que usaremos para los requerimientos**
 
-### Matriz de Requerimientos Funcionales (RF)
 | ID | Descripción | Actor | Prioridad | Criterio de Aceptación Verificable |
 | :---: | :--- | :---: | :---: | :--- |
 | **RF-01** | El sistema debe permitir a un jugador enviar un reporte detallado contra otro jugador por conducta indebida. | Jugador | Alta | Permite ingresar el NickName del acusado y el motivo. El acusado debe existir en el sistema. No permite reportes vacíos ni auto-reportes.|
