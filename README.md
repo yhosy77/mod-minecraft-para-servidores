@@ -43,6 +43,8 @@ Actualmente, en muchos servidores medianos y pequeños, la moderación se realiz
 * **Económico:** Lleva un control claro de las compras de rangos y donaciones de los jugadores, evitando cobros duplicados o que se entreguen beneficios a la persona equivocada.
 * **Social:** Hace que el juego sea más justo para todos, ya que las sanciones se aplican con reglas claras y automáticas para evitar favoritismos, dando además segundas oportunidades con periodos de prueba a quienes apelan.
 
+---
+
 ## PASO 2: Requerimientos del Sistema
 
 ### Matriz de Requerimientos Funcionales (RF) y No Funcionales (RNF)
