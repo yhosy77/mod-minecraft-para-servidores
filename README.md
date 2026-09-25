@@ -20,7 +20,7 @@ Skill Issue Admin
 ## PASO 1: Descripción del Problema y Contexto de Automatización
 
 ### 1. Contexto (Dominio)
-El proyecto se ubica en el dominio de la administración de **servidores multijugador del MINECRAAAAA (Java obviamente)**. En estos entornos virtuales coinciden simultáneamente decenas o cientos de jugadores en tiempo real. Para garantizar una convivencia armónica y un juego justo, las comunidades requieren moderar comportamientos tóxicos(`Como Felipe`), gestionar rangos/permisos y controlar sanciones de forma ordenada.
+El proyecto se ubica en el dominio de la administración de **servidores multijugador del Minecraft (Java obviamente)**. En estos entornos virtuales coinciden simultáneamente decenas o cientos de jugadores en tiempo real. Para garantizar una convivencia armónica y un juego justo, las comunidades requieren moderar comportamientos tóxicos, gestionar rangos/permisos y controlar sanciones de forma ordenada.
 
 ### 2. Actores del Sistema
 * **Jugador (Player / User):** Usuario convencional del servidor. Puede jugar, interactuar y enviar reportes sobre infracciones cometidas por otros usuarios.
