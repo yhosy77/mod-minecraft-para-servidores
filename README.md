@@ -10,8 +10,8 @@ Skill Issue Admin
 ## Conformación del Equipo y Roles inciales:
 | Nombre Completo | Rol Inicial | Responsabilidades Principales |
 | :--- | :--- | :--- |
-| **David Santiago Díaz** | Responsable de Producto (PO) | Cuidar el problema |
-| **Samuel Gacharna** | Responsable de Producto (PO) | Requerimientos |
+| **David Santiago Díaz** | Responsable de Producto (PO) | Cuidar el problema y validar que los RF respondan a las necesidades del proyecto. |
+| **Samuel Gacharna** | Responsable de Producto (PO) | Apoyo en la definición de requerimientos y criterios de aceptación. |
 | **Samuel Zona** | Responsable de Diseño (AR) | Liderar el diagrama de clases UML y el registro de decisiones de POO. |
 | **Juan Bello** | Responsable de Diseño (AR) | Garantizar que la arquitectura y clases respeten el diseño estructurado. |
 | **Miguel** | Responsable de Calidad (QA) | Definir criterios de aceptación, casos límite, pruebas y manejo de errores. |
