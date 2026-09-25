@@ -47,3 +47,14 @@ Actualmente, en muchos servidores medianos y pequeños, la moderación se realiz
 
 ### Matriz de Requerimientos Funcionales (RF) y No Funcionales (RNF)
 `**Esto va en el otro archivo**`
+
+# Plan Hacia La Entrega 2
+
+## Tabla de Trazabilidad Inicial
+
+| Requerimiento | Clases Involucradas (Previstas) | Temas del Curso Aplicados | Estado Inicial |
+| :---: | :--- | :--- | :---: |
+| **RF-01 / RF-06** | `Reporte`, `GestorReportes` | Clases y Objetos, Encapsulamiento | Pendiente |
+| **RF-02 / RF-05** | `Jugador`, `Rango` | Encapsulamiento, Atributos Privados | Pendiente |
+| **RF-03 / RF-07** | `Sancion` (Abstracta), `Baneo`, `Mute` | Herencia, Clases Abstractas | Pendiente |
+| **RF-04 / RF-08** | `HistorialSanciones`, `GestorJugadores` | Comunicación entre objetos | Pendiente |
