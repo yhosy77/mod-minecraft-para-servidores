@@ -142,7 +142,7 @@ classDiagram
         -String nombreComando
     }
 
-    class /report{
+    class report{
         -Player player
         -String motivo
     }
