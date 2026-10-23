@@ -100,7 +100,7 @@ classDiagram
         +gettersAndSetters()
     }
 
-    %% CAPA DE COMANDOS
+    %% CAPA DE COMANDOS Y POLIMORFISMO DE COMANDOS
     class BasicCommand {
         #String nombreComando
         #String descripcion
@@ -111,6 +111,18 @@ classDiagram
         -GestorReportes gestorReportes
         +ejecutar(Jugador reportante, Jugador reportado, String motivo) void
         +coolDown(int cantidadReportes) void
+    }
+
+    class BanCommand {
+        -GestorSanciones gestorSanciones
+        +ejecutar(Jugador admin, Jugador objetivo, String tipo, int duracion, String motivo) void
+        +validarPermisosStaff(Jugador admin) boolean
+    }
+
+    class ProfileCommand {
+        -GestorJugadores gestorJugadores
+        +ejecutar(Jugador solicitante) void
+        +mostrarEstadisticas(Jugador objetivo) String
     }
 
     %% GESTORES Y CLASE ANIDADA
@@ -166,11 +178,13 @@ classDiagram
         +SancionInvalidaException(String msg)
     }
 
-    %% JERARQUÍAS Y HERENCIA
+    %% JERARQUÍAS Y HERENCIA DE COMANDOS Y SANCIONES
     Sancion <|-- Baneo : extends
     Sancion <|-- Mute : extends
     Sancion <|-- Advertido : extends
     BasicCommand <|-- ReportCommand : extends
+    BasicCommand <|-- BanCommand : extends
+    BasicCommand <|-- ProfileCommand : extends
 
     %% IMPLEMENTACION DE INTERFAZ
     IPersistencia <|.. PersistenciaArchivo : implements
@@ -187,6 +201,8 @@ classDiagram
     Jugador "1" --> "0..*" CompraRango : realiza
     CompraRango "0..*" --> "1" Rango : adquiere
     ReportCommand --> GestorReportes : utiliza
+    BanCommand --> GestorSanciones : utiliza
+    ProfileCommand --> GestorJugadores : utiliza
 
     %% EXCEPCIONES
     GestorJugadores ..> JugadorNoEncontradoException : lanza
