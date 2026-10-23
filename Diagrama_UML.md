@@ -136,6 +136,14 @@ classDiagram
         +obtenerSancionesPorJugador(String id) ArrayList~Sancion~
     }
 
+
+    %% COMANDOS
+    class BasicCommand{
+        -String nombreComando
+    }
+
+
+
     %% PERSISTENCIA EN ARCHIVOS
     class PersistenciaArchivo {
         -String rutaBase
