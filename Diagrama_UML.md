@@ -145,6 +145,8 @@ classDiagram
     class report{
         -Player player
         -String motivo
+
+        -coolDown(int cantidadReportes) void
     }
 
 
