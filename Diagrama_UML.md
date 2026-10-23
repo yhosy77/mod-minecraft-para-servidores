@@ -26,7 +26,7 @@ classDiagram
         #String motivo
         #String adminResponsable
         #boolean activa
-        -int contadorSanciones$
+        #int contadorSanciones$
         +getSiguienteId() int$
         +aplicarEfecto() boolean*
         +revocar(String motivoPerdon) void
