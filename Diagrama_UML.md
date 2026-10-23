@@ -100,6 +100,19 @@ classDiagram
         +gettersAndSetters()
     }
 
+    %% CAPA DE COMANDOS
+    class BasicCommand {
+        #String nombreComando
+        #String descripcion
+        +ejecutar() void
+    }
+
+    class ReportCommand {
+        -GestorReportes gestorReportes
+        +ejecutar(Jugador reportante, Jugador reportado, String motivo) void
+        +coolDown(int cantidadReportes) void
+    }
+
     %% GESTORES Y CLASE ANIDADA
     class GestorReportes {
         -ArrayList~Reporte~ reportes
@@ -136,21 +149,6 @@ classDiagram
         +obtenerSancionesPorJugador(String id) ArrayList~Sancion~
     }
 
-
-    %% COMANDOS
-    class BasicCommand{
-        -String nombreComando
-    }
-
-    class report{
-        -Player player
-        -String motivo
-
-        -coolDown(int cantidadReportes) void
-    }
-
-
-
     %% PERSISTENCIA EN ARCHIVOS
     class PersistenciaArchivo {
         -String rutaBase
@@ -168,15 +166,16 @@ classDiagram
         +SancionInvalidaException(String msg)
     }
 
-    %% JERARQUÍA DE SANCIONES
+    %% JERARQUÍAS Y HERENCIA
     Sancion <|-- Baneo : extends
     Sancion <|-- Mute : extends
     Sancion <|-- Advertido : extends
+    BasicCommand <|-- ReportCommand : extends
 
     %% IMPLEMENTACION DE INTERFAZ
     IPersistencia <|.. PersistenciaArchivo : implements
 
-    %% RELACIONES DEL DOMINIO
+    %% RELACIONES DEL DOMINIO Y GESTORES
     Jugador "1" --> "1" Rango : tiene
     Jugador "1" *-- "0..*" Sancion : historial
     GestorReportes "1" o-- "0..*" Reporte : administra
@@ -187,6 +186,7 @@ classDiagram
     Jugador "1" --> "0..*" Donacion : realiza
     Jugador "1" --> "0..*" CompraRango : realiza
     CompraRango "0..*" --> "1" Rango : adquiere
+    ReportCommand --> GestorReportes : utiliza
 
     %% EXCEPCIONES
     GestorJugadores ..> JugadorNoEncontradoException : lanza
