@@ -7,7 +7,7 @@ classDiagram
         +cargarDatos(String archivo) ArrayList
     }
 
-    %% CLASE ABSTRACTA Y HERENCIA DE SANCIONES
+    %% CLASE ABSTRACTA Y HERENCIA DE SANCIONES (POLIMORFISMO DE INCLUSIÓN)
     class Sancion {
         <<abstract>>
         #int id
@@ -100,7 +100,7 @@ classDiagram
         +gettersAndSetters()
     }
 
-    %% CAPA DE COMANDOS Y POLIMORFISMO DE COMANDOS
+    %% CAPA DE COMANDOS (POLIMORFISMO DE INCLUSIÓN)
     class BasicCommand {
         #String nombreComando
         #String descripcion
@@ -133,7 +133,7 @@ classDiagram
         +cambiarRango(Jugador jugador, Rango rango) boolean
     }
 
-    %% GESTORES Y CLASE ANIDADA
+    %% GESTORES Y CLASE ANIDADA (NESTED CLASS)
     class GestorReportes {
         -ArrayList~Reporte~ reportes
         -IPersistencia persistencia
@@ -157,6 +157,7 @@ classDiagram
         +registrarJugador(Jugador j) void
         +buscarJugador(String id) Jugador
         +buscarJugador(String nombre, boolean exacto) Jugador
+        +validarConexionGlobal(String ip)$ boolean
         +eliminarJugador(String id) boolean
         +actualizarHoras(String id, int horas) void
     }
@@ -186,7 +187,7 @@ classDiagram
         +SancionInvalidaException(String msg)
     }
 
-    %% JERARQUÍAS Y HERENCIA DE COMANDOS Y SANCIONES
+    %% JERARQUÍAS Y HERENCIA
     Sancion <|-- Baneo : extends
     Sancion <|-- Mute : extends
     Sancion <|-- Advertido : extends
