@@ -36,3 +36,13 @@ En el proyecto trabajar todo sobre un mismo archivo puede ser muy tedioso y dif�
 
 ### Decisión y Consecuencias:
 Decidimos que en lo que más se pueda, utilizaremos archivos separados para poder llevar el control y el orden mucho más fácil para el proyecto y así también podremos sacar y/o tener una mejor producción y comunicación con cada uno de los integrantes.
+
+# DEC 003 - Usar PaperMC como API.
+**Fecha:** 12-10-2026
+**Estado:** Aprobado.
+
+### Contexto:
+Paper ofrece una API más sencilla para el desarrollo del plugin y está mejor optimizada, sumado a que ya tiene en su código algunas interfaces que nos permiten usar de una manera más sencilla la implementación de comandos y por medio de Gradle nos permite abrir el servidor y probarlo.
+
+### Decisión y Consecuencias:
+Descargamos la plantilla del PaperMC y la subimos al repositorio. Además fuimos desarrollando unos plugins de prueba con funciones básicas para familiarizarnos con el entorno de desarrollo mientras fijabamos el rumbo del proyecto para crear el Diagrama UML.
