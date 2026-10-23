@@ -3,149 +3,145 @@ classDiagram
     %% INTERFAZ DE PERSISTENCIA
     class IPersistencia {
         <<interface>>
-        +guardarJugadores(List~Jugador~ jugadores) void
-        +cargarJugadores() List~Jugador~
-        +guardarSanciones(List~Sancion~ sanciones) void
-        +cargarSanciones() List~Sancion~
-        +guardarReportes(List~Reporte~ reportes) void
-        +cargarReportes() List~Reporte~
-        +guardarDonaciones(List~Donacion~ donaciones) void
-        +cargarDonaciones() List~Donacion~
-        +guardarComprasRango(List~CompraRango~ compras) void
-        +cargarComprasRango() List~CompraRango~
+        +guardarDatos(String archivo, ArrayList datos) boolean
+        +cargarDatos(String archivo) ArrayList
     }
 
-    %% CLASE ABSTRACTA Y HERENCIA
-    
+    %% CLASE ABSTRACTA Y HERENCIA DE SANCIONES
     class Sancion {
         <<abstract>>
-        #int idSancion
-        #Date fechaInicio
-        #Date fechaFin
-        #String nickNameJugador
+        #int id
         #String motivo
-        #String adminResponsable
+        #String fecha
         #boolean activa
-        #int contadorSanciones$
-        +getSiguienteId() int$
-        +aplicarEfecto() boolean*
-        +revocar(String motivoPerdon) void
+        -int contadorSanciones$+getSiguienteId()$ int
+        +aplicarEfecto()* boolean
+        +revocar() void
         +gettersAndSetters()
     }
 
-    class Advertido {
-        -int nivelSeveridad
-        -String advertenciaPrevia
-        +aplicarEfecto() boolean
-    }
-
     class Baneo {
+        -boolean permanente
         -int duracionDias
-        -boolean esPermanente
         +aplicarEfecto() boolean
     }
 
     class Mute {
         -int duracionMinutos
-        -String canalRestringido
+        -String canalSilenciado
+        +aplicarEfecto() boolean
+    }
+
+    class Advertido {
+        -int nivelSeveridad
+        -boolean requiereConfirmacion
         +aplicarEfecto() boolean
     }
 
     %% ENTIDADES DEL DOMINIO
     class Jugador {
-        -String nickName
-        -Rango rango
-        -boolean sancionado
+        -String id
+        -String nombre
+        -String skin
+        -int nivel
+        -int monedas
+        -int horasJugadas
+        -String fechaIngreso
+        -Rango rangoActual
         -ArrayList~Sancion~ historialSanciones
+        +NIVEL_MIN_MIEMBRO$int = 10 +MONEDAS_MIN_MIEMBRO$ int = 500
+        +registrarHoras(int horas) void
+        +asignarRango(Rango nuevoRango) void
+        +subirRangoGratuito(Rango rangoMiembro) boolean
         +agregarSancion(Sancion s) void
-        +esReincidente() boolean
+        +tienePermiso(String permiso) boolean
         +gettersAndSetters()
     }
 
     class Rango {
         -String nombre
-        -int nivelPermiso
         -ArrayList~String~ permisos
+        -boolean espago
+        +agregarPermiso(String permiso) void
         +tienePermiso(String permiso) boolean
+        +esRangoPago() boolean
         +gettersAndSetters()
     }
 
     class Reporte {
-        -int idReporte
-        -Date fechaCreacion
-        -String adminResponsable
-        -String reportado
-        -String denunciante
+        -int id
         -String motivo
         -String estado
+        -String fecha
+        -String reportante
+        -String reportado
+        -int contadorReportes$+getSiguienteId()$ int
+        +cambiarEstado(String nuevoEstado) void
+        +getEstado() String
+        +getFecha() String
         +gettersAndSetters()
     }
 
-    %% NUEVA CLASE: DONACIONES
     class Donacion {
-        -int idDonacion
+        -int id
         -double monto
-        -Date fecha
-        -String estado
+        -String fecha
         -Jugador jugador
-        +registrar() void
+        +validarMonto() boolean
+        +getMonto() double
         +gettersAndSetters()
     }
 
-    %% NUEVA CLASE: COMPRA DE RANGOS
     class CompraRango {
-        -int idCompra
-        -double precio
-        -Date fecha
-        -String estado
-        -Jugador jugador
-        -Rango rangoComprado
-        +confirmarCompra() boolean
+        -String fechaCompra
+        -Donacion donacionAsociada
+        -Rango rangoAdquirido
+        +procesarCompra(Jugador j) boolean
         +gettersAndSetters()
     }
 
     %% GESTORES Y CLASE ANIDADA
     class GestorReportes {
-        -ArrayList~Reporte~ listaReportes
-        +agregarReporte(Reporte r) void
-        +procesarReporte(int id, String estado) void
+        -ArrayList~Reporte~ reportes
+        -IPersistencia persistencia
+        +crearReporte(Jugador j1, Jugador j2, String motivo) Reporte
+        +resolverReporte(int id, String estado) void
+        +filtrarReportes(String estado) List~Reporte~
         +filtrarReportes(CriterioFiltro criterio) List~Reporte~
     }
 
     class CriterioFiltro {
         <<nested>>
         -String estadoBuscado
-        -Date fechaInicio
+        -String fechaDesde
+        -String fechaHasta
         +coincide(Reporte r) boolean
     }
 
     class GestorJugadores {
-        -ArrayList~Jugador~ listaJugadores
+        -ArrayList~Jugador~ jugadores
+        -IPersistencia persistencia
         +registrarJugador(Jugador j) void
-        +buscarJugador(String nick) Jugador
+        +buscarJugador(String id) Jugador
+        +buscarJugador(String nombre, boolean exacto) Jugador
+        +eliminarJugador(String id) boolean
+        +actualizarHoras(String id, int horas) void
     }
 
     class GestorSanciones {
         -ArrayList~Sancion~ sancionesActivas
+        -IPersistencia persistencia
         +aplicarSancion(Jugador j, Sancion s) void
-        +revocarSancion(int idSancion, String motivo) void
-        +consultarHistorial(Jugador j) List~Sancion~
-        +calcularReincidencia(Jugador j) boolean
+        +levantarSancion(int idSancion) boolean
+        +obtenerSancionesPorJugador(String id) ArrayList~Sancion~
     }
 
     %% PERSISTENCIA EN ARCHIVOS
     class PersistenciaArchivo {
-        -String rutaCarpeta
-        +guardarJugadores(List~Jugador~ jugadores) void
-        +cargarJugadores() List~Jugador~
-        +guardarSanciones(List~Sancion~ sanciones) void
-        +cargarSanciones() List~Sancion~
-        +guardarReportes(List~Reporte~ reportes) void
-        +cargarReportes() List~Reporte~
-        +guardarDonaciones(List~Donacion~ donaciones) void
-        +cargarDonaciones() List~Donacion~
-        +guardarComprasRango(List~CompraRango~ compras) void
-        +cargarComprasRango() List~CompraRango~
+        -String rutaBase
+        +guardarDatos(String archivo, ArrayList datos) boolean
+        +cargarDatos(String archivo) ArrayList
+        +verificarArchivo(String nombreArchivo) boolean
     }
 
     %% EXCEPCIONES PERSONALIZADAS
@@ -157,7 +153,7 @@ classDiagram
         +SancionInvalidaException(String msg)
     }
 
-    %% HERENCIA
+    %% JERARQUÍA DE SANCIONES
     Sancion <|-- Baneo : extends
     Sancion <|-- Mute : extends
     Sancion <|-- Advertido : extends
@@ -165,23 +161,15 @@ classDiagram
     %% IMPLEMENTACION DE INTERFAZ
     IPersistencia <|.. PersistenciaArchivo : implements
 
-    %% RELACIONES DEL JUGADOR
-    Jugador "0..*" --> "1" Rango : tiene
+    %% RELACIONES DEL DOMINIO
+    Jugador "1" --> "1" Rango : tiene
     Jugador "1" *-- "0..*" Sancion : historial
-
-    %% RELACIONES DE REPORTES
     GestorReportes "1" o-- "0..*" Reporte : administra
-    GestorReportes *-- CriterioFiltro : contiene
+    GestorReportes *-- CriterioFiltro : contiene (nested)
     GestorJugadores "1" o-- "0..*" Jugador : administra
-
-    %% RELACIONES DE SANCIONES
     GestorSanciones --> Jugador : procesa
     GestorSanciones --> Sancion : administra
-
-    %% NUEVAS RELACIONES: DONACIONES
     Jugador "1" --> "0..*" Donacion : realiza
-
-    %% NUEVAS RELACIONES: COMPRAS DE RANGO
     Jugador "1" --> "0..*" CompraRango : realiza
     CompraRango "0..*" --> "1" Rango : adquiere
 
