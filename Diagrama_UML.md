@@ -142,6 +142,11 @@ classDiagram
         -String nombreComando
     }
 
+    class /report{
+        -Player player
+        -String motivo
+    }
+
 
 
     %% PERSISTENCIA EN ARCHIVOS
