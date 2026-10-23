@@ -53,10 +53,38 @@ Actualmente, en muchos servidores medianos y pequeños, la moderación se realiz
 
 ## PASO 2: Requerimientos del Sistema
 
-### Matriz de Requerimientos Funcionales (RF) y No Funcionales (RNF)
-`**Esto va en el otro archivo**`
+## Aplicación de los Conceptos Vistos en Clase
 
-# Plan Hacia La Entrega 2
+### 1. Clases
+Dividimos el proyecto en tres tipos de clases. Las **entidades** (`Jugador`, `Rango`, `Sancion`, `Reporte`, `Donacion` y `CompraRango`) guardan la información del servidor. Los **gestores** (`GestorJugadores`, `GestorSanciones` y `GestorReportes`) se encargan de la lógica, como buscar un jugador, aplicar una sanción o resolver un reporte. Por último, los **comandos** (`ReportCommand`, `BanCommand`, `ProfileCommand` y `RankCommand`) representan lo que el jugador o el staff escribe en el chat.
+
+Decidimos separarlo así para que cada clase tenga una sola responsabilidad. Si mezclábamos todo, por ejemplo poniendo la lógica de sanciones dentro de `Jugador`, esa clase iba a crecer demasiado y cualquier cambio podía dañar otras partes. Con esta separación, si cambiamos cómo funciona un comando, las entidades no se ven afectadas.
+
+### 2. Atributos y Métodos Estáticos
+Los usamos en dos partes del proyecto:
+
+- **Generación de IDs:** `Sancion` y `Reporte` tienen un contador estático (`contadorSanciones` y `contadorReportes`) y un método estático `getSiguienteId()`. Como el contador pertenece a la clase y no a cada objeto, todas las sanciones comparten el mismo, entonces cada vez que se crea una nueva recibe un ID diferente y nunca se repite.
+- **Requisitos de rango:** en `Jugador` están las constantes `NIVEL_MIN_MIEMBRO = 10` y `MONEDAS_MIN_MIEMBRO = 500`, que son lo que necesita un jugador para subir a Miembro sin pagar. Estos valores son iguales para todos, así que no tiene sentido que cada jugador tenga su propia copia. Además, si el día de mañana se quiere cambiar el requisito, solo hay que modificarlo en un lugar.
+
+### 3. Clases Anidadas
+`CriterioFiltro` es una clase estática anidada dentro de `GestorReportes`. La usamos para filtrar reportes por estado y por un rango de fechas. Sin ella, el método `filtrarReportes` tendría que recibir varios parámetros sueltos, lo que lo haría más difícil de leer y de usar.
+
+La dejamos dentro de `GestorReportes` porque es la única clase que la necesita. Crearla como una clase aparte solo habría agregado algo más al proyecto que ninguna otra parte usa.
+
+### 4. Interfaces
+Creamos la interfaz `IPersistencia`, que tiene los métodos `guardarDatos()` y `cargarDatos()`. La implementa `PersistenciaArchivo`, y los tres gestores tienen un atributo de tipo `IPersistencia`. De esta forma, los gestores no saben cómo se guardan los datos, solo saben que pueden llamar a esos dos métodos.
+
+La razón principal fue pensar en el futuro del proyecto. Por ahora todo se guarda en archivos, pero si después queremos usar una base de datos, basta con crear una nueva clase que implemente `IPersistencia`, y los gestores siguen funcionando sin cambiar nada.
+
+### 5. Polimorfismo
+Es uno de los conceptos que más aparece en el diseño:
+
+- **Sanciones:** `aplicarEfecto()` es un método abstracto en `Sancion`, y cada subclase lo implementa de forma distinta. Un `Baneo` saca al jugador del servidor, un `Mute` le bloquea el chat y un `Advertido` solo le muestra un aviso. `GestorSanciones` llama a `aplicarEfecto()` sin necesidad de saber qué tipo de sanción está aplicando.
+- **Comandos:** todos los comandos heredan de `BasicCommand` y sobrescriben el método `ejecutar(Jugador emisor, String[] args)`. En la primera versión del diagrama cada comando tenía un `ejecutar` con parámetros diferentes, y al revisarlo nos dimos cuenta de que eso no era polimorfismo, porque no se podían tratar todos los comandos de la misma manera. Por eso dejamos la misma firma para todos.
+- **Sobrecarga:** `buscarJugador` se puede llamar solo con el ID, o con el nombre y un booleano que indica si la búsqueda debe ser exacta. Pasa lo mismo con `filtrarReportes`, que puede recibir solo un estado o un `CriterioFiltro` completo. Así el mismo método se adapta a lo que se necesite buscar.
+- **Por interfaz:** como los gestores trabajan con el tipo `IPersistencia` y no directamente con `PersistenciaArchivo`, se puede cambiar la implementación sin modificar el resto del código.
+
+La mayor ventaja del polimorfismo en nuestro proyecto es que facilita agregar cosas nuevas. Por ejemplo, si queremos una sanción `Kick`, solo hay que crear la subclase con su propio `aplicarEfecto()`, y el resto del sistema la puede usar sin hacer cambios.
 
 ## Tabla de Trazabilidad Inicial
 
@@ -75,4 +103,4 @@ Actualmente, en muchos servidores medianos y pequeños, la moderación se realiz
 | **Samuel Zona** | **Responsable de Producto (PO)** | Validar que la implementación de la Entrega 2 cumpla los 10 Requerimientos Funcionales planteados. |
 | **Juan Bello** | **Responsable de Producto (PO)** | Mantener la trazabilidad entre el problema, los requerimientos y los casos de uso del mod. |
 | **Samuel Gacharna** | **Responsable de Calidad (QA)** | Diseñar las excepciones personalizadas, probar casos límite y verificar la persistencia sin errores. |
-| **Miguel** | **Responsable de Integración (GI)** | Controlar la estructura del repositorio en GitHub, verificar commits de cada integrante y gestionar ramas. |
+| **Miguel Peña** | **Responsable de Integración (GI)** | Controlar la estructura del repositorio en GitHub, verificar commits de cada integrante y gestionar ramas. |
