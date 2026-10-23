@@ -125,6 +125,14 @@ classDiagram
         +mostrarEstadisticas(Jugador objetivo) String
     }
 
+    class RankCommand {
+        -GestorJugadores gestorJugadores
+        +ejecutar(Jugador admin, String accion, String targetJugador, String targetRango) void
+        +crearRango(String nombre, int nivel) boolean
+        +eliminarRango(String nombre) boolean
+        +cambiarRango(Jugador jugador, Rango rango) boolean
+    }
+
     %% GESTORES Y CLASE ANIDADA
     class GestorReportes {
         -ArrayList~Reporte~ reportes
@@ -185,6 +193,7 @@ classDiagram
     BasicCommand <|-- ReportCommand : extends
     BasicCommand <|-- BanCommand : extends
     BasicCommand <|-- ProfileCommand : extends
+    BasicCommand <|-- RankCommand : extends
 
     %% IMPLEMENTACION DE INTERFAZ
     IPersistencia <|.. PersistenciaArchivo : implements
@@ -203,6 +212,7 @@ classDiagram
     ReportCommand --> GestorReportes : utiliza
     BanCommand --> GestorSanciones : utiliza
     ProfileCommand --> GestorJugadores : utiliza
+    RankCommand --> GestorJugadores : utiliza
 
     %% EXCEPCIONES
     GestorJugadores ..> JugadorNoEncontradoException : lanza
