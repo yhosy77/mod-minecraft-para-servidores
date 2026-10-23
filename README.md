@@ -86,6 +86,10 @@ Es uno de los conceptos que más aparece en el diseño:
 
 La mayor ventaja del polimorfismo en nuestro proyecto es que facilita agregar cosas nuevas. Por ejemplo, si queremos una sanción `Kick`, solo hay que crear la subclase con su propio `aplicarEfecto()`, y el resto del sistema la puede usar sin hacer cambios.
 
+## 6. API Usada: PaperMC
+
+Cada Plugin de Minecraft normalmente tiene una API base. Existen muchas y diversas APIs, siendo las más populares Spiggot, Bukkit, Sponge y PaperMC. Paper ha venido ganando terreno en los últimos años debido a la facilidad que tiene para implementarse, además de su buena compatibilidad con otras APIs populares como Bukkit o Spiggot (de hecho, PaperMC está basada en Spiggot). Por ende decidimos usar esta API que ya cuenta con muchas herramientas que nos permitirán optimizar de una mejor manera el código: Prueba de Servidores, Interfaces para la creación de Comandos, Estructura del Proyecto, y conexiones con el software del propio juego de Minecraft.
+
 ## Tabla de Trazabilidad Inicial
 
 | Requerimiento | Clases Involucradas (Previstas) | Temas del Curso Aplicados | Estado Inicial |
