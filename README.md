@@ -88,7 +88,26 @@ La mayor ventaja del polimorfismo en nuestro proyecto es que facilita agregar co
 
 ## 6. API Usada: PaperMC
 
-Cada Plugin de Minecraft normalmente tiene una API base. Existen muchas y diversas APIs, siendo las más populares Spiggot, Bukkit, Sponge y PaperMC. Paper ha venido ganando terreno en los últimos años debido a la facilidad que tiene para implementarse, además de su buena compatibilidad con otras APIs populares como Bukkit o Spiggot (de hecho, PaperMC está basada en Spiggot). Por ende decidimos usar esta API que ya cuenta con muchas herramientas que nos permitirán optimizar de una mejor manera el código: Prueba de Servidores, Interfaces para la creación de Comandos, Estructura del Proyecto, y conexiones con el software del propio juego de Minecraft.
+---
+### Justificación Tecnológica y Arquitectura del Proyecto: Selección de la API PaperMC/Spigo
+
+El desarrollo del plugin "Skill Issue Admin" requiere una base tecnológica robusta que facilite la implementación estricta de los principios de la Programación Orientada a Objetos (POO) exigidos en el curso. En el ecosistema de Minecraft existen diversas alternativas de desarrollo, entre las cuales destacan Bukkit, Spigot, Sponge y **PaperMC**. Tras un análisis técnico, el equipo decidió adoptar **PaperMC** —una plataforma optimizada y construida directamente sobre la arquitectura de Spigot— como el núcleo para la gestión del servidor.
+
+### Relación con las Decisiones de Diseño y Utilidad de los Conceptos POO:
+
+**Interfaces y Contratos de Desacoplamiento:**
+
+La API de Paper/Spigot provee contratos nativos basados en interfaces (como los ejecutores de comandos y los manejadores de eventos) que obligan a nuestras clases de control a implementar comportamientos específicos sin acoplarse rígidamente a la lógica interna del juego. Esto fomenta un diseño modular, permitiendo que componentes como el GestorJugadores, el GestorSanciones y el GestorReportes operen de manera independiente y limpia.
+
+**Polimorfismo de Inclusión en la Capa de Comandos:**
+
+La infraestructura de la API nos permite estructurar el sistema de comandos del servidor bajo una clase base abstracta (BasicCommand) y extenderla hacia acciones especializadas (ReportCommand, BanCommand, ProfileCommand, RankCommand). Gracias a esto, el sistema aplica polimorfismo de inclusión, permitiendo procesar cualquier comando de forma unificada a través del método ejecutar(), lo que evita el uso excesivo de estructuras condicionales complejas (if-else o instanceof).
+
+**Optimización del Ciclo de Vida y Persistencia:**
+
+La integración de Paper con herramientas de gestión de dependencias (como Maven) facilita la organización del proyecto en capas bien definidas: separando las entidades de dominio (Jugador, Rango, Sancion, Reporte) de la lógica de persistencia en archivos planos y el manejo de excepciones personalizadas. Esto garantiza la trazabilidad de los datos y asegura un diseño coherente y escalable para el proyecto.
+
+---
 
 ## Tabla de Trazabilidad Inicial
 
