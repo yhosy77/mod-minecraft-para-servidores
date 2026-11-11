@@ -127,3 +127,15 @@ La integración de Paper con herramientas de gestión de dependencias (como Mave
 | **Juan Bello** | **Responsable de Producto (PO)** | Mantener la trazabilidad entre el problema, los requerimientos y los casos de uso del mod. |
 | **Samuel Gacharna** | **Responsable de Calidad (QA)** | Diseñar las excepciones personalizadas, probar casos límite y verificar la persistencia sin errores. |
 | **Miguel Peña** | **Responsable de Integración (GI)** | Controlar la estructura del repositorio en GitHub, verificar commits de cada integrante y gestionar ramas. |
+
+
+##  Conformación del Equipo y Roles (Entrega 3)?
+| Nombre Completo | Rol Entrega 2 | Responsabilidades Principales |
+| :--- | :---: | :--- |
+| **David Santiago Díaz** | **Responsable de Prodcuto** |  |
+| **Juan Felipe Camacho Landazábal** | **Responsable de Producto (PO)** |  |
+| **Samuel Zona** | **Responsable de Calidad (QA)** |  |
+| **Juan Bello** | **Responsable de Integración (GI)** |  |
+| **Samuel Gacharna** | **Responsable de Diseño (AR)** |  |
+| **Miguel Peña** | **Responsable de Diseño (AR)** |  |
+
