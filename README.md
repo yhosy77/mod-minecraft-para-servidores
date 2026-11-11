@@ -128,6 +128,8 @@ La integración de Paper con herramientas de gestión de dependencias (como Mave
 | **Samuel Gacharna** | **Responsable de Calidad (QA)** | Diseñar las excepciones personalizadas, probar casos límite y verificar la persistencia sin errores. |
 | **Miguel Peña** | **Responsable de Integración (GI)** | Controlar la estructura del repositorio en GitHub, verificar commits de cada integrante y gestionar ramas. |
 
+---
+
 
 ##  Conformación del Equipo y Roles (Entrega 3)?
 | Nombre Completo | Rol Corte 3 | Responsabilidades Principales |
