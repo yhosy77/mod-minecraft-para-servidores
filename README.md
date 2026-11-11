@@ -130,7 +130,7 @@ La integración de Paper con herramientas de gestión de dependencias (como Mave
 
 
 ##  Conformación del Equipo y Roles (Entrega 3)?
-| Nombre Completo | Rol Entrega 2 | Responsabilidades Principales |
+| Nombre Completo | Rol Corte 3 | Responsabilidades Principales |
 | :--- | :---: | :--- |
 | **David Santiago Díaz** | **Responsable de Prodcuto** |  |
 | **Juan Felipe Camacho Landazábal** | **Responsable de Producto (PO)** |  |
