@@ -134,7 +134,7 @@ La integración de Paper con herramientas de gestión de dependencias (como Mave
 ##  Conformación del Equipo y Roles (Entrega 3)?
 | Nombre Completo | Rol Corte 3 | Responsabilidades Principales |
 | :--- | :---: | :--- |
-| **David Santiago Díaz** | **Responsable de Prodcuto** | Validar que el plugin ejecutable cumpla al 100% los Requerimientos Funcionales (RF-01 a RF-10) y liderar la preparación de la narrativa para la sustentación final. |
+| **David Santiago Díaz** | **Responsable de Producto** | Validar que el plugin ejecutable cumpla al 100% los Requerimientos Funcionales (RF-01 a RF-10) y liderar la preparación de la narrativa para la sustentación final. |
 | **Juan Felipe Camacho Landazábal** | **Responsable de Producto (PO)** | Verificar la fluidez entre la capa de comandos y el flujo de trabajo del usuario/admin, asegurando la trazabilidad del problema de moderación resuelto. |
 | **Samuel Zona** | **Responsable de Calidad (QA)** | Diseñar pruebas de casos límite, verificar las excepciones personalizadas (`JugadorNoEncontradoException`, `SancionInvalidaException`), probar la persistencia y auditar la `Bitacora_IA.md` |
 | **Juan Bello** | **Responsable de Integración (GI)** | Administrar el repositorio en GitHub, verificar la compilación limpia del proyecto (`.jar`), gestionar ramas/PRs y garantizar los commits frecuentes de todos los integrantes. |
