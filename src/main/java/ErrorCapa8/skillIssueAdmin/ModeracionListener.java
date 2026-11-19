@@ -10,11 +10,6 @@ import org.bukkit.event.player.PlayerLoginEvent;
 
 public class ModeracionListener implements Listener {
 
-    // TODO: Cuando Samuel Gacharna tenga lista GestorSanciones, inyectarla aquí:
-    // private final GestorSanciones gestorSanciones;
-    // public ModeracionListener(GestorSanciones gestorSanciones) {
-    //     this.gestorSanciones = gestorSanciones;
-    // }
 
     public ModeracionListener() {
     }
@@ -23,7 +18,7 @@ public class ModeracionListener implements Listener {
     public void onAsyncPlayerChat(AsyncPlayerChatEvent e) {
         Player player = e.getPlayer();
 
-        // TODO: Reemplazar esta verificación temporal por la consulta real a GestorSanciones / Mute activo
+   
         boolean estaMuteado = false;
 
         if (estaMuteado) {
@@ -36,7 +31,7 @@ public class ModeracionListener implements Listener {
     public void onPlayerLogin(PlayerLoginEvent e) {
         Player player = e.getPlayer();
 
-        // TODO: Reemplazar esta verificación temporal por la consulta real a GestorSanciones / Baneo activo
+
         boolean estaBaneado = false;
         String motivoBaneo = "Has sido baneado del servidor.";
 
