@@ -9,6 +9,7 @@ import ErrorCapa8.skillIssueAdmin.Rank.GestorJugadores;
 import ErrorCapa8.skillIssueAdmin.Rank.IPersistencia;
 import ErrorCapa8.skillIssueAdmin.Rank.PersistenciaArchivo;
 import ErrorCapa8.skillIssueAdmin.Rank.RankCommand;
+import ErrorCapa8.skillIssueAdmin.Rank.ProfileCommand;
 import ErrorCapa8.skillIssueAdmin.Rank.RankDisplayManager;
 import ErrorCapa8.skillIssueAdmin.Rank.RankPermissionManager;
 import ErrorCapa8.skillIssueAdmin.Rank.RankMenuListener;
@@ -54,6 +55,7 @@ public final class SkillIssueAdmin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new RankMenuListener(this, gestorJugadores, rankDisplayManager, rankPermissionManager), this);
         getServer().getPluginManager().registerEvents(new RegistroJugadorListener(gestorJugadores, rankDisplayManager, rankPermissionManager), this);
         registerCommand("rank", new RankCommand(gestorJugadores));
+        registerCommand("profile", new ProfileCommand(gestorJugadores, gestorSanciones));
         getServer().getOnlinePlayers().forEach(player -> {
             gestorJugadores.registrarOActualizarJugador(player);
             rankPermissionManager.apply(player);
