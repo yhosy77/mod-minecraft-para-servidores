@@ -1,43 +1,38 @@
 package ErrorCapa8.skillIssueAdmin.Sanctions;
 
+import ErrorCapa8.skillIssueAdmin.ComandoAdministrativo;
 import ErrorCapa8.skillIssueAdmin.Rank.GestorJugadores;
-import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import java.util.Arrays;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 
-/** /perdonar <numero> [motivo...] : levanta (revoca) una sanción; sirve para quitar baneos, mutes y advertencias. */
-public final class PerdonarCommand implements BasicCommand {
-    private final GestorJugadores jugadores;
+/**
+ * /perdonar <numero> <justificación...> : revoca una sanción (RF-07).
+ * El jugador queda en estado "Advertido" durante 30 días.
+ */
+public final class PerdonarCommand extends ComandoAdministrativo {
     private final GestorSanciones sanciones;
-    public PerdonarCommand(GestorJugadores jugadores, GestorSanciones sanciones) { this.jugadores = jugadores; this.sanciones = sanciones; }
 
-    @Override public void execute(CommandSourceStack source, String[] args) {
-        if (!(source.getExecutor() instanceof Player admin)) {
-            source.getSender().sendMessage(Component.text("Este comando solo puede usarlo un jugador."));
-            return;
-        }
-        if (!jugadores.esAdministrador(admin.getUniqueId())) {
-            admin.sendMessage(Component.text("No tienes permiso; se requiere el rango ADMIN.", NamedTextColor.RED));
-            return;
-        }
-        if (args.length < 1) {
-            admin.sendMessage(Component.text("Uso: /perdonar <número de sanción> [motivo]", NamedTextColor.YELLOW));
-            return;
-        }
+    public PerdonarCommand(GestorJugadores jugadores, GestorSanciones sanciones) {
+        super("perdonar", "Revoca una sanción por su número", jugadores);
+        this.sanciones = sanciones;
+    }
+
+    @Override protected void ejecutarComando(CommandSourceStack source, String[] args) {
+        Player admin = jugador(source);
+        if (args.length < 2) { uso(admin, "/perdonar <número de sanción> <justificación>"); return; }
         int numero;
         try {
             numero = Integer.parseInt(args[0].replace("#", ""));
         } catch (NumberFormatException exception) {
-            admin.sendMessage(Component.text("El número de sanción debe ser un entero (ej: /perdonar 5).", NamedTextColor.RED));
+            error(admin, "El número de sanción debe ser un entero (ej: /perdonar 5 se disculpó).");
             return;
         }
-        String motivo = args.length > 1 ? String.join(" ", Arrays.copyOfRange(args, 1, args.length)) : "";
-        if (sanciones.levantarSancion(numero, motivo))
-            admin.sendMessage(Component.text("Sanción #" + numero + " revocada.", NamedTextColor.GREEN));
+        String justificacion = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        if (sanciones.levantarSancion(numero, justificacion))
+            exito(admin, "Sanción #" + numero + " revocada. El jugador queda Advertido durante "
+                    + GestorSanciones.PERIODO_PRUEBA_DIAS + " días.");
         else
-            admin.sendMessage(Component.text("No existe una sanción activa con el número #" + numero + ".", NamedTextColor.RED));
+            error(admin, "No existe una sanción activa con el número #" + numero + ".");
     }
 }
