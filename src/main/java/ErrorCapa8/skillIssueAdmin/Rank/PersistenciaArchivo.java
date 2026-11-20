@@ -96,7 +96,68 @@ public final class PersistenciaArchivo implements IPersistencia {
         return lineas;
     }
 
+    // ------------------------------------------------------------------
+    // Rangos y jugadores en archivos planos: rangos.txt y jugadores.txt
+    // ------------------------------------------------------------------
+
+    public static final String ARCHIVO_RANGOS = "rangos.txt";
+    public static final String ARCHIVO_JUGADORES = "jugadores.txt";
+
+    /**
+     * Carga rangos y jugadores desde rangos.txt y jugadores.txt.
+     * Si rangos.txt todavía no existe, lee el rangos.yml de la versión anterior (se pasa a .txt al guardar).
+     * Las líneas dañadas se omiten y se informa en la consola.
+     *
+     * Formato de rangos.txt:
+     *   PREDETERMINADO;idRango
+     *   RANGO;id;nombre;tipo;base;color;formato1,formato2
+     */
     @Override public PersistenciaDatos cargar() throws IOException {
+        if (!verificarArchivo(ARCHIVO_RANGOS)) return cargarDesdeYaml();
+        List<Rango> rangos = new ArrayList<>();
+        String predeterminado = "player";
+        for (String linea : cargarDatos(ARCHIVO_RANGOS)) {
+            String[] p = linea.split(";", -1);
+            try {
+                if (p[0].equals("PREDETERMINADO") && p.length >= 2) {
+                    predeterminado = p[1].trim();
+                } else if (p[0].equals("RANGO") && p.length >= 7) {
+                    java.util.Set<TextDecoration> formatos = new java.util.HashSet<>();
+                    if (!p[6].isBlank() && !p[6].equals("-"))
+                        for (String formato : p[6].split(",")) formatos.add(TextDecoration.valueOf(formato.trim()));
+                    rangos.add(new Rango(p[1].trim(), p[2], TipoRango.valueOf(p[3].trim()),
+                            Boolean.parseBoolean(p[4].trim()), Rango.parseColor(p[5].trim()), formatos));
+                } else {
+                    throw new IllegalArgumentException("formato desconocido");
+                }
+            } catch (IllegalArgumentException exception) {
+                System.err.println("Se omitió una línea dañada de " + ARCHIVO_RANGOS + ": " + linea);
+            }
+        }
+        List<Jugador> jugadores = new ArrayList<>();
+        for (String linea : cargarDatos(ARCHIVO_JUGADORES)) {
+            Jugador jugador = Jugador.desdeLinea(linea);
+            if (jugador != null) jugadores.add(jugador);
+            else System.err.println("Se omitió una línea dañada de " + ARCHIVO_JUGADORES + ": " + linea);
+        }
+        return new PersistenciaDatos(rangos, jugadores, predeterminado);
+    }
+
+    /** Guarda rangos.txt y jugadores.txt. */
+    @Override public void guardar(Collection<Rango> rangos, Collection<Jugador> jugadores, String defaultId) throws IOException {
+        List<String> lineas = new ArrayList<>();
+        lineas.add("PREDETERMINADO;" + defaultId);
+        for (Rango rango : rangos) {
+            String formatos = rango.getFormatos().stream().map(Enum::name).sorted().reduce((a, b) -> a + "," + b).orElse("-");
+            lineas.add("RANGO;" + rango.getId() + ";" + rango.getNombre().replace(";", ",") + ";" + rango.getTipo().name()
+                    + ";" + rango.esBase() + ";" + rango.getColorNombre() + ";" + formatos);
+        }
+        if (!guardarDatos(ARCHIVO_RANGOS, lineas)) throw new IOException("No se pudo escribir " + ARCHIVO_RANGOS + ".");
+        if (!guardarDatos(ARCHIVO_JUGADORES, new ArrayList<>(jugadores))) throw new IOException("No se pudo escribir " + ARCHIVO_JUGADORES + ".");
+    }
+
+    /** Lee el rangos.yml de la versión anterior (solo se usa si todavía no existe rangos.txt). */
+    private PersistenciaDatos cargarDesdeYaml() throws IOException {
         if (!archivo.exists()) return new PersistenciaDatos(List.of(), List.of(), "player");
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(archivo);
         int formatVersion = yaml.getInt("version", 0);
@@ -131,33 +192,6 @@ public final class PersistenciaArchivo implements IPersistencia {
             }
         }
         return new PersistenciaDatos(rangos, jugadores, yaml.getString("rangoPredeterminado", "player"));
-    }
-
-    @Override public void guardar(Collection<Rango> rangos, Collection<Jugador> jugadores, String defaultId) throws IOException {
-        YamlConfiguration yaml = new YamlConfiguration();
-        yaml.set("version", 2);
-        yaml.set("rangoPredeterminado", defaultId);
-        for (Rango rango : rangos) {
-            String path = "rangos." + rango.getId() + ".";
-            yaml.set(path + "nombre", rango.getNombre());
-            yaml.set(path + "tipo", rango.getTipo().name());
-            yaml.set(path + "base", rango.esBase());
-            yaml.set(path + "permisos", new ArrayList<>(rango.getPermisos()));
-            yaml.set(path + "color", rango.getColorNombre());
-            yaml.set(path + "formatos", rango.getFormatos().stream().map(Enum::name).sorted().toList());
-        }
-        for (Jugador jugador : jugadores) {
-            String path = "jugadores." + jugador.getUuid() + ".";
-            yaml.set(path + "nombre", jugador.getNombre());
-            yaml.set(path + "rango", jugador.getRangoId());
-            yaml.set(path + "nivel", jugador.getNivel());
-            yaml.set(path + "monedas", jugador.getMonedas());
-            yaml.set(path + "horasJugadas", jugador.getHorasJugadas());
-            yaml.set(path + "fechaIngreso", jugador.getFechaIngreso().toEpochMilli());
-        }
-        File parent = archivo.getParentFile();
-        if (!parent.exists() && !parent.mkdirs()) throw new IOException("No se pudo crear la carpeta de datos del plugin.");
-        yaml.save(archivo);
     }
 
     @Override public List<Baneo> cargarBaneos() throws IOException {
