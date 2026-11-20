@@ -100,3 +100,179 @@ Aplicación en el proyecto (Lo que hicimos nosotros):
 Lo que tomamos de la IA: Aplicamos la idea de la clase controladora para centralizar las llamadas entre módulos y seguimos su guía para limpiar los imports cruzados que bloqueaban la compilación.
 
 Lo que ajustamos manualmente: La IA propuso una estructura genérica que no contemplaba las validaciones específicas de nuestros datos ni los casos borde del proyecto. Tuvimos que adaptar manualmente los tipos de retorno, corregir los conflictos línea por línea en Git y ajustar la lógica de conexión para que respetara los requerimientos exactos de la entrega.
+
+### Reporte de IA: Felipe Camacho
+
+`Inteligencia Artificial Usada`: ChatGPT - Codex.
+
+## 1. ¿El proyecto debería desarrollarse como un mod de Minecraft o como un plugin de servidor?
+
+# Bitácora IA — Nuevas implementaciones administrativas
+
+**Proyecto:** Skill Issue Admin  
+**Fecha:** 20 de noviembre de 2026  
+**Integrante:** Juan Felipe Camacho Landazábal  
+**Inteligencia Artificial usada:** ChatGPT y Codex
+
+---
+
+# 1. Implementación del sistema de Unban
+
+## Objetivo
+Desarrollar un sistema administrativo que permita revocar baneos mediante interfaces virtuales dentro de Minecraft, conservando el historial de las sanciones anteriores.
+
+## Prompt
+
+Se solicitó a ChatGPT elaborar un prompt para Codex que permitiera implementar un sistema de Unban integrado con la arquitectura existente del plugin.
+
+Los requerimientos principales fueron:
+
+- Crear el comando administrativo `/unban`.
+- Mostrar mediante una GUI los jugadores que tengan baneos activos.
+- Permitir seleccionar un jugador y consultar la información de su baneo.
+- Incorporar una interfaz de confirmación y cancelación.
+- Revocar el baneo utilizando `GestorSanciones`.
+- Registrar quién realizó la revocación y cuándo, si el modelo existente lo permite.
+- Actualizar la persistencia mediante `IPersistencia` y `PersistenciaArchivo`.
+- Conservar el historial de la sanción después de revocarla.
+- Validar permisos y evitar operaciones sobre baneos inexistentes, expirados o previamente revocados.
+
+También se indicó que Codex debía inspeccionar primero las clases existentes y respetar la arquitectura del proyecto.
+
+## Respuesta de la IA
+
+ChatGPT generó un prompt estructurado para Codex, especificando el flujo de interacción mediante interfaces virtuales, las validaciones necesarias y la integración con el gestor de sanciones.
+
+Se estableció que la revocación de un baneo no debía eliminar su registro histórico, puesto que esta información sería necesaria para futuras consultas de antecedentes y reincidencias.
+
+## Decisiones técnicas
+
+- La revocación se realizará mediante el gestor de sanciones.
+- Se conservará el registro histórico del baneo.
+- La interfaz gráfica será el medio de interacción administrativa.
+- La persistencia deberá reflejar los cambios realizados.
+
+## Verificación
+
+Pendiente de comprobar:
+- Revocación de baneos activos.
+- Persistencia después de reiniciar el servidor.
+- Conservación del historial.
+- Restricción de acceso para usuarios sin permisos administrativos.
+
+---
+
+# 2. Implementación del sistema de estadísticas
+
+## Objetivo
+Desarrollar una interfaz administrativa que permita consultar estadísticas generales del servidor a partir de la información almacenada por los gestores existentes.
+
+## Prompt
+
+Se solicitó a ChatGPT elaborar un prompt para Codex que permitiera implementar un comando `/stats` mediante interfaces virtuales.
+
+Los requerimientos principales fueron:
+
+- Crear una interfaz gráfica de estadísticas generales.
+- Mostrar el total de jugadores registrados.
+- Mostrar el total de reportes y su distribución entre pendientes y resueltos.
+- Mostrar el total de sanciones.
+- Consultar la cantidad de baneos activos, mutes activos y advertencias registradas.
+- Organizar la información mediante ítems representativos, nombres descriptivos y lore.
+- Incorporar navegación entre páginas cuando sea necesario.
+
+Se estableció que los datos debían obtenerse directamente de `GestorJugadores`, `GestorReportes` y `GestorSanciones`, según las operaciones disponibles en las clases existentes.
+
+También se indicó que no debían crearse contadores independientes que pudieran desactualizarse respecto a los registros reales.
+
+## Respuesta de la IA
+
+ChatGPT generó un prompt para implementar el sistema de estadísticas utilizando los gestores existentes como fuentes de información.
+
+Se recomendó calcular las estadísticas a partir de los registros disponibles, evitando duplicar información y manteniendo la consistencia con el sistema de persistencia.
+
+## Decisiones técnicas
+
+- Los gestores existentes serán la fuente de los datos.
+- Las estadísticas se calcularán a partir de la información registrada.
+- La presentación se realizará mediante interfaces virtuales.
+- No se introducirán sistemas de almacenamiento paralelos.
+
+## Verificación
+
+Pendiente de comprobar:
+- Correspondencia entre estadísticas y registros reales.
+- Actualización de los valores después de nuevas operaciones.
+- Correcta navegación de las interfaces.
+- Acceso exclusivo para administradores.
+
+---
+
+# 3. Implementación del sistema de historial y reincidencias
+
+## Objetivo
+Desarrollar un sistema que permita consultar los antecedentes administrativos de los jugadores, relacionando los reportes recibidos con las sanciones aplicadas.
+
+## Prompt
+
+Se solicitó a ChatGPT elaborar un prompt para Codex que permitiera implementar un sistema de consulta de historial mediante interfaces virtuales.
+
+Los requerimientos principales fueron:
+
+- Incorporar un comando `/history` o una opción equivalente dentro de la interfaz administrativa.
+- Mostrar una GUI con los jugadores registrados.
+- Permitir seleccionar un jugador para consultar sus antecedentes.
+- Mostrar los reportes recibidos, incluyendo motivo, descripción, fecha y estado.
+- Mostrar las sanciones recibidas, incluyendo tipo, motivo, duración, responsable y estado actual.
+- Incorporar estadísticas individuales relacionadas con reportes y sanciones.
+- Identificar reincidencias mediante la frecuencia de incidentes y la repetición de motivos o categorías.
+- Permitir navegar entre páginas cuando existan numerosos registros.
+
+Se especificó que los reportes no debían interpretarse automáticamente como culpabilidad. El sistema debía distinguir entre denuncias recibidas, reportes resueltos y sanciones efectivamente aplicadas.
+
+También se indicó que no debía implementarse un sistema automático de puntuación ni modificar sanciones como consecuencia de las estadísticas.
+
+## Respuesta de la IA
+
+ChatGPT generó un prompt para desarrollar el historial administrativo utilizando `GestorReportes` y `GestorSanciones` como fuentes de información.
+
+Se estableció que la reincidencia debía identificarse mediante la consulta de antecedentes existentes, sin confundir la cantidad de reportes con la cantidad de sanciones confirmadas.
+
+La interfaz debía permitir consultar la información de manera organizada y facilitar la evaluación de antecedentes por parte del personal administrativo.
+
+## Decisiones técnicas
+
+- Los reportes y las sanciones se consultarán desde sus respectivos gestores.
+- Se conservará la distinción entre reportes y sanciones.
+- La reincidencia se determinará a partir de los antecedentes registrados.
+- El sistema tendrá una finalidad informativa y no aplicará sanciones automáticamente.
+- Se utilizarán interfaces virtuales para seleccionar jugadores y consultar sus registros.
+
+## Verificación
+
+Pendiente de comprobar:
+- Consulta de reportes y sanciones de un jugador.
+- Correcta diferenciación entre reportes y sanciones.
+- Identificación de antecedentes repetidos.
+- Visualización de información histórica.
+- Navegación y permisos administrativos.
+
+---
+
+# 4. Consideraciones generales de implementación
+
+Para las tres funcionalidades se establecieron las siguientes condiciones:
+
+1. Trabajar sobre una copia independiente del proyecto original, conservando una versión estable para presentación.
+2. Inspeccionar las clases y métodos existentes antes de implementar cambios.
+3. Mantener la arquitectura orientada a objetos del proyecto.
+4. Reutilizar los gestores y mecanismos de persistencia existentes.
+5. Utilizar interfaces virtuales siguiendo el patrón de las interfaces administrativas ya desarrolladas.
+6. Evitar modificaciones innecesarias en funcionalidades ajenas al alcance.
+7. Mantener las versiones actuales de Java, Paper y Gradle.
+8. Compilar el proyecto al finalizar y documentar los resultados de las pruebas.
+
+**Resultado esperado:** incorporar tres funcionalidades administrativas nuevas —Unban, Estadísticas e Historial y Reincidencias— sin comprometer la versión estable del plugin ni alterar la arquitectura existente.
+
+**Respuesta:**  
+Las funcionalidades principales de *Skill Issue Admin* —reportes, sanciones, rangos, historial y persistencia— corresponden principalmente a lógica del servidor, por lo que un **plugin de Paper/Spigot** resulta más adecuado. Un mod sería necesario principalmente si se requirieran modificaciones del cliente o nuevas mecánicas, bloques, ítems o interfaces.
