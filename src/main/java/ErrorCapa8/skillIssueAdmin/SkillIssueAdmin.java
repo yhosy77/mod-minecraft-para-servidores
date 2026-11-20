@@ -1,16 +1,60 @@
 package ErrorCapa8.skillIssueAdmin;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import ErrorCapa8.skillIssueAdmin.Report.ReportAdminCommand;
+import ErrorCapa8.skillIssueAdmin.Report.ReportCreationManager;
+import ErrorCapa8.skillIssueAdmin.Report.ReportMenuListener;
+import ErrorCapa8.skillIssueAdmin.Report.ReportPlayer;
+import ErrorCapa8.skillIssueAdmin.Rank.GestorJugadores;
+import ErrorCapa8.skillIssueAdmin.Rank.IPersistencia;
+import ErrorCapa8.skillIssueAdmin.Rank.PersistenciaArchivo;
+import ErrorCapa8.skillIssueAdmin.Rank.RankCommand;
+import ErrorCapa8.skillIssueAdmin.Rank.RankDisplayManager;
+import ErrorCapa8.skillIssueAdmin.Rank.RankPermissionManager;
+import ErrorCapa8.skillIssueAdmin.Rank.RankMenuListener;
+import ErrorCapa8.skillIssueAdmin.Rank.RegistroJugadorListener;
+import ErrorCapa8.skillIssueAdmin.Sanctions.BanCommand;
+import ErrorCapa8.skillIssueAdmin.Sanctions.BanEnforcementListener;
+import ErrorCapa8.skillIssueAdmin.Sanctions.BanMenuListener;
+import ErrorCapa8.skillIssueAdmin.Sanctions.GestorSanciones;
 
 public final class SkillIssueAdmin extends JavaPlugin {
+    private ReportCreationManager reportManager;
+    private GestorJugadores gestorJugadores;
+    private RankDisplayManager rankDisplayManager;
+    private RankPermissionManager rankPermissionManager;
+    private GestorSanciones gestorSanciones;
 
     @Override
     public void onEnable() {
-        System.out.println("Plugin Enabled!");
+        reportManager = new ReportCreationManager(this);
+        getServer().getPluginManager().registerEvents(new ReportMenuListener(this, reportManager), this);
+        registerCommand("report", new ReportPlayer(reportManager));
+        registerCommand("gestreports", new ReportAdminCommand(reportManager));
+        IPersistencia persistenciaRangos = new PersistenciaArchivo(getDataFolder());
+        gestorJugadores = new GestorJugadores(this, persistenciaRangos);
+        gestorSanciones = new GestorSanciones(this, persistenciaRangos, gestorJugadores);
+        getServer().getPluginManager().registerEvents(new BanMenuListener(this, gestorJugadores, gestorSanciones), this);
+        getServer().getPluginManager().registerEvents(new BanEnforcementListener(gestorSanciones), this);
+        registerCommand("ban", new BanCommand(gestorJugadores));
+        rankDisplayManager = new RankDisplayManager(this, gestorJugadores);
+        rankPermissionManager = new RankPermissionManager(this, gestorJugadores);
+        getServer().getPluginManager().registerEvents(rankDisplayManager, this);
+        getServer().getPluginManager().registerEvents(new RankMenuListener(this, gestorJugadores, rankDisplayManager, rankPermissionManager), this);
+        getServer().getPluginManager().registerEvents(new RegistroJugadorListener(gestorJugadores, rankDisplayManager, rankPermissionManager), this);
+        registerCommand("rank", new RankCommand(gestorJugadores));
+        getServer().getOnlinePlayers().forEach(player -> {
+            gestorJugadores.registrarOActualizarJugador(player);
+            rankPermissionManager.apply(player);
+            rankDisplayManager.refreshPlayer(player);
+        });
+        getLogger().info("Skill Issue Admin habilitado.");
     }
 
     @Override
     public void onDisable() {
-        System.out.println("Plugin Disabled!");
+        if (rankDisplayManager != null) rankDisplayManager.shutdown();
+        if (rankPermissionManager != null) rankPermissionManager.clearAll();
+        getLogger().info("Skill Issue Admin deshabilitado.");
     }
 }

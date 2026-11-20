@@ -4,3 +4,21 @@ version: '${version}'
 main: ErrorCapa8.skillIssueAdmin.SkillIssueAdmin
 api-version: '26.3'
 load: POSTWORLD
+commands:
+  report:
+    description: Abre el sistema o reporta a un jugador por nombre
+    usage: /report [jugador]
+  gestreports:
+    description: Abre la bandeja administrativa de reportes
+    usage: /gestreports
+    permission: skillissueadmin.reports
+  rank:
+    description: Abre la gestión administrativa de rangos
+    usage: /rank
+  ban:
+    description: Abre el asistente gráfico para aplicar una sanción
+    usage: /ban
+permissions:
+  skillissueadmin.reports:
+    description: Permite revisar y gestionar reportes
+    default: op
