@@ -13,31 +13,36 @@ import org.bukkit.entity.Player;
  * Mute: silencia al jugador en el chat durante cierta cantidad de minutos.
  *
  * aplicarEfecto() le avisa al jugador. El bloqueo real de los mensajes lo hace
- * MuteEnforcementListener preguntando a GestorSanciones.estaMuteado(uuid).
+ * ModeracionListener preguntando a GestorSanciones.obtenerMuteActivo(uuid).
  */
 public final class Mute extends Sancion {
     public static final String CANAL_GLOBAL = "global";
 
     private final int duracionMinutos;
     private final String canalSilenciado;
+    private final CausaBaneo tipoInfraccion;
 
     /** Constructor para un mute NUEVO (lo usa MuteCommand). */
     public Mute(UUID jugadorId, String jugadorNombre, UUID responsableId, String responsableNombre,
-                String motivo, int duracionMinutos, String canalSilenciado) throws SancionInvalidaException {
+                CausaBaneo tipoInfraccion, String motivo, int duracionMinutos, String canalSilenciado) throws SancionInvalidaException {
         super(UUID.randomUUID(), getSiguienteId(), jugadorId, jugadorNombre, responsableId, responsableNombre,
                 Instant.now(), motivo, true, "");
+        if (tipoInfraccion == null) throw new SancionInvalidaException("El tipo de infracción del mute es obligatorio.");
         if (motivo == null || motivo.isBlank()) throw new SancionInvalidaException("El motivo del mute no puede estar vacío.");
         if (duracionMinutos <= 0) throw new SancionInvalidaException("Un mute debe durar al menos 1 minuto.");
+        this.tipoInfraccion = tipoInfraccion;
         this.duracionMinutos = duracionMinutos;
         this.canalSilenciado = canalSilenciado == null || canalSilenciado.isBlank() ? CANAL_GLOBAL : limpiar(canalSilenciado);
     }
 
     /** Constructor para un mute cargado desde sanciones.txt. */
     Mute(UUID id, int numero, UUID jugadorId, String jugadorNombre, UUID responsableId, String responsableNombre,
-         Instant creadaEn, String motivo, boolean activa, String motivoPerdon, int duracionMinutos, String canalSilenciado) {
+         Instant creadaEn, String motivo, boolean activa, String motivoPerdon, int duracionMinutos, String canalSilenciado,
+         CausaBaneo tipoInfraccion) {
         super(id, numero, jugadorId, jugadorNombre, responsableId, responsableNombre, creadaEn, motivo, activa, motivoPerdon);
         this.duracionMinutos = duracionMinutos;
         this.canalSilenciado = canalSilenciado;
+        this.tipoInfraccion = tipoInfraccion == null ? CausaBaneo.OTRA : tipoInfraccion;
     }
 
     /** Efecto del mute: avisa al jugador que quedó silenciado. */
@@ -45,6 +50,7 @@ public final class Mute extends Sancion {
         Player player = buscarJugadorConectado(j);
         if (player == null) return false;
         player.sendMessage(Component.text("Has sido silenciado por " + duracionMinutos + " minuto(s).", NamedTextColor.RED));
+        player.sendMessage(Component.text("Infracción: ", NamedTextColor.GRAY).append(Component.text(tipoInfraccion.etiqueta(), NamedTextColor.WHITE)));
         player.sendMessage(Component.text("Motivo: ", NamedTextColor.GRAY).append(Component.text(getMotivo(), NamedTextColor.WHITE)));
         return true;
     }
@@ -53,7 +59,11 @@ public final class Mute extends Sancion {
 
     @Override public String getTipo() { return "MUTE"; }
 
-    @Override protected String datosExtra() { return duracionMinutos + SEPARADOR + canalSilenciado; }
+    @Override public CausaBaneo getTipoInfraccion() { return tipoInfraccion; }
+
+    @Override public NivelSeveridad getNivelEnEscala() { return NivelSeveridad.MUTE; }
+
+    @Override protected String datosExtra() { return duracionMinutos + SEPARADOR + canalSilenciado + SEPARADOR + tipoInfraccion.name(); }
 
     /** Mensaje que ve el jugador cuando intenta escribir estando silenciado. */
     public Component mensajeSilenciado() {

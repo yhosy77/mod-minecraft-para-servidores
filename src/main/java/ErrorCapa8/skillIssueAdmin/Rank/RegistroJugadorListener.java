@@ -14,8 +14,12 @@ public final class RegistroJugadorListener implements Listener {
     }
     @EventHandler public void onJoin(PlayerJoinEvent event) {
         gestor.registrarOActualizarJugador(event.getPlayer());
+        gestor.actualizarEstadisticasJuego(event.getPlayer());
         permissionManager.apply(event.getPlayer());
         displayManager.refreshPlayer(event.getPlayer());
     }
-    @EventHandler public void onQuit(PlayerQuitEvent event) { permissionManager.clear(event.getPlayer()); }
+    @EventHandler public void onQuit(PlayerQuitEvent event) {
+        gestor.actualizarEstadisticasJuego(event.getPlayer());   // guarda nivel y horas jugadas de la sesión
+        permissionManager.clear(event.getPlayer());
+    }
 }

@@ -1,22 +1,15 @@
 package ErrorCapa8.skillIssueAdmin.Rank;
 
-import io.papermc.paper.command.brigadier.BasicCommand;
+import ErrorCapa8.skillIssueAdmin.ComandoAdministrativo;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
-import net.kyori.adventure.text.Component;
-import org.bukkit.entity.Player;
 
-public final class RankCommand implements BasicCommand {
-    private final GestorJugadores gestor;
-    public RankCommand(GestorJugadores gestor) { this.gestor = gestor; }
-    @Override public void execute(CommandSourceStack source, String[] args) {
-        if (!(source.getExecutor() instanceof Player player)) {
-            source.getSender().sendMessage(Component.text("§c/rank solo puede usarse dentro del juego."));
-            return;
-        }
-        if (!gestor.esAdministrador(player.getUniqueId())) {
-            player.sendMessage(Component.text("§cNo tienes permisos. Solo un rango ADMIN puede usar /rank."));
-            return;
-        }
-        player.openInventory(new RankMainMenu(gestor).getInventory());
+/** /rank : abre la gestión gráfica de rangos (solo ADMIN). */
+public final class RankCommand extends ComandoAdministrativo {
+    public RankCommand(GestorJugadores gestor) {
+        super("rank", "Abre la gestión administrativa de rangos", gestor);
+    }
+
+    @Override protected void ejecutarComando(CommandSourceStack source, String[] args) {
+        jugador(source).openInventory(new RankMainMenu(gestorJugadores).getInventory());
     }
 }

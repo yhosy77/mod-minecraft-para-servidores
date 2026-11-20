@@ -74,6 +74,12 @@ public final class Baneo extends Sancion {
 
     @Override public String getTipo() { return "BANEO"; }
 
+    @Override public CausaBaneo getTipoInfraccion() { return causa; }
+
+    @Override public NivelSeveridad getNivelEnEscala() {
+        return permanente ? NivelSeveridad.BANEO_PERMANENTE : NivelSeveridad.BANEO_TEMPORAL;
+    }
+
     /** En un baneo el motivo es la causa elegida en el menú de /ban. */
     @Override public String getMotivo() { return causaCompleta(); }
 

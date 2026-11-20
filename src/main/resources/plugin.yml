@@ -7,10 +7,10 @@ load: POSTWORLD
 commands:
   report:
     description: Abre el sistema o reporta a un jugador por nombre
-    usage: /report [jugador]
+    usage: /report [jugador] [motivo]
   gestreports:
-    description: Abre la bandeja administrativa de reportes
-    usage: /gestreports
+    description: Abre la bandeja de reportes o los filtra por estado o fechas
+    usage: /gestreports [estado <estado> | fechas <desde> <hasta> [estado]]
     permission: skillissueadmin.reports
   rank:
     description: Abre la gestión administrativa de rangos
@@ -18,12 +18,30 @@ commands:
   profile:
     description: Muestra el perfil registrado de un jugador
     usage: /profile [jugador]
+  jugador:
+    description: Registra un jugador nuevo o ajusta sus monedas (solo ADMIN)
+    usage: /jugador registrar <nick> [nivel] [monedas] | /jugador monedas <nick> <cantidad>
+  subirrango:
+    description: Sube gratis al rango Miembro con nivel 10 o 500 monedas
+    usage: /subirrango
+  donar:
+    description: Registra una donación al servidor (no da recompensas)
+    usage: /donar <monto> [mensaje]
+  donaciones:
+    description: Muestra el total donado en un periodo (solo ADMIN)
+    usage: /donaciones [días]
+  comprarango:
+    description: Registra la compra de un rango exclusivo (solo ADMIN)
+    usage: /comprarango <jugador> <rango> <valor>
+  estadisticas:
+    description: Resumen de sanciones y reportes atendidos por cada admin (solo ADMIN)
+    usage: /estadisticas [días]
   ban:
     description: Abre el asistente gráfico para aplicar una sanción
     usage: /ban
   mute:
     description: Silencia a un jugador en el chat por unos minutos
-    usage: /mute <jugador> <minutos> <motivo>
+    usage: /mute <jugador> <minutos> <insultos|trampas|spam|toxicidad|exploits|otra> <motivo>
   warn:
     description: Envía una advertencia visual y sonora a un jugador
     usage: /warn <jugador> <severidad 1-3> <motivo>
@@ -31,8 +49,8 @@ commands:
     description: Muestra el historial de sanciones y la reincidencia de un jugador
     usage: /sanciones <jugador>
   perdonar:
-    description: Revoca una sanción por su número
-    usage: /perdonar <numero> [motivo]
+    description: Revoca una sanción por su número; el jugador queda Advertido 30 días
+    usage: /perdonar <numero> <justificación>
 permissions:
   skillissueadmin.reports:
     description: Permite revisar y gestionar reportes

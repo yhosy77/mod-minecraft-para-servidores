@@ -9,7 +9,7 @@ public class CompraRango {
     private final String nombreJugador;
     private final String nombreRango;
     private final double precioPagado;
-    private final LocalDateTime fecha;
+    private LocalDateTime fecha;
     private boolean completada;
 
     public CompraRango(String idCompra, String nombreJugador, String nombreRango, double precioPagado) {
@@ -34,24 +34,46 @@ public class CompraRango {
         this.completada = false;
     }
 
+    /** Constructor para una compra cargada desde compras.txt (conserva su fecha y estado). */
+    public CompraRango(String idCompra, String nombreJugador, String nombreRango, double precioPagado,
+                       LocalDateTime fecha, boolean completada) {
+        this(idCompra, nombreJugador, nombreRango, precioPagado);
+        if (fecha != null) this.fecha = fecha;
+        this.completada = completada;
+    }
+
     /**
-     * Valida y marca la compra como completada.
-     * Cuando integres con Samuel Zona (Jugador / Rango), aquí se debe asignar el rango al Jugador.
+     * Valida y marca la compra como completada. La asignación del rango al jugador
+     * la hace GestorJugadores desde /comprarango (RF-12).
+     * @throws IllegalStateException si la compra ya estaba completada.
+     * @throws IllegalArgumentException si el monto no alcanza.
      */
-    public boolean procesarCompra(double montoEntregado) throws SancionInvalidaException {
+    public boolean procesarCompra(double montoEntregado) {
         if (completada) {
-            throw new SancionInvalidaException("La compra " + idCompra + " ya fue completada.");
+            throw new IllegalStateException("La compra " + idCompra + " ya fue completada.");
         }
         if (montoEntregado < precioPagado) {
-            throw new SancionInvalidaException(
+            throw new IllegalArgumentException(
                     "Monto insuficiente para comprar el rango " + nombreRango +
                             ". Requerido: " + precioPagado + ", recibido: " + montoEntregado
             );
         }
-
-        // TODO: Conectar con Jugador.asignarRango(rango) cuando esté disponible la clase Rango.
         this.completada = true;
         return true;
+    }
+
+    /** Línea para compras.txt: id;jugador;rango;valor;fecha;completada */
+    public String toLinea() {
+        return idCompra + ";" + nombreJugador.replace(";", ",") + ";" + nombreRango.replace(";", ",") + ";"
+                + precioPagado + ";" + fecha + ";" + completada;
+    }
+
+    /** @throws IllegalArgumentException si la línea está dañada. */
+    public static CompraRango desdeLinea(String linea) {
+        String[] p = linea.split(";", -1);
+        if (p.length < 6) throw new IllegalArgumentException("línea incompleta");
+        return new CompraRango(p[0], p[1], p[2], Double.parseDouble(p[3].trim()),
+                LocalDateTime.parse(p[4].trim()), Boolean.parseBoolean(p[5].trim()));
     }
 
     public String getIdCompra() {

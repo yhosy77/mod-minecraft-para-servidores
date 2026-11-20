@@ -48,6 +48,8 @@ public final class Rango {
     public Set<String> getPermisos() { return tipo.permisos(); }
     public boolean tienePermiso(String permiso) { return getPermisos().contains(permiso); }
     public boolean esValidoComoPredeterminado() { return tipo == TipoRango.PLAYER && !tipo.tienePermisosElevados(); }
+    /** Rango exclusivo de pago (RF-12): no se puede conseguir gratis y no da permisos de staff. */
+    public boolean esPago() { return tipo == TipoRango.EXCLUSIVO; }
     public TextColor getColor() { return color; }
     public String getColorNombre() {
         if (color instanceof NamedTextColor named) return NamedTextColor.NAMES.keyOr(named, "gray");
@@ -76,6 +78,7 @@ public final class Rango {
             case OP -> NamedTextColor.GOLD;
             case MOD -> NamedTextColor.AQUA;
             case PLAYER -> NamedTextColor.GRAY;
+            case EXCLUSIVO -> NamedTextColor.LIGHT_PURPLE;
         };
     }
 }

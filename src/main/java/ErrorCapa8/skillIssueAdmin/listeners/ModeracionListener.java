@@ -1,42 +1,37 @@
 package ErrorCapa8.skillIssueAdmin.listeners;
 
-import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
+import ErrorCapa8.skillIssueAdmin.Sanctions.GestorSanciones;
+import ErrorCapa8.skillIssueAdmin.Sanctions.Mute;
+import io.papermc.paper.event.player.AsyncChatEvent;
+import java.time.Instant;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 
+/**
+ * Hace cumplir las sanciones en tiempo real:
+ * - Si el jugador está muteado, cancela sus mensajes de chat y le avisa.
+ * - Si tiene un baneo vigente, no lo deja entrar al servidor.
+ */
 public class ModeracionListener implements Listener {
+    private final GestorSanciones gestorSanciones;
 
-
-    public ModeracionListener() {
+    public ModeracionListener(GestorSanciones gestorSanciones) {
+        this.gestorSanciones = gestorSanciones;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onAsyncPlayerChat(AsyncPlayerChatEvent e) {
-        Player player = e.getPlayer();
-
-   
-        boolean estaMuteado = false;
-
-        if (estaMuteado) {
-            e.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "No puedes enviar mensajes porque estás silenciado (Mute).");
-        }
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onAsyncPlayerChat(AsyncChatEvent e) {
+        Mute mute = gestorSanciones.obtenerMuteActivo(e.getPlayer().getUniqueId());
+        if (mute == null) return;
+        e.setCancelled(true);
+        e.getPlayer().sendMessage(mute.mensajeSilenciado());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerLogin(PlayerLoginEvent e) {
-        Player player = e.getPlayer();
-
-
-        boolean estaBaneado = false;
-        String motivoBaneo = "Has sido baneado del servidor.";
-
-        if (estaBaneado) {
-            e.disallow(PlayerLoginEvent.Result.KICK_BANNED, ChatColor.RED + motivoBaneo);
-        }
+    public void onPlayerLogin(AsyncPlayerPreLoginEvent e) {
+        gestorSanciones.obtenerBaneoActivo(e.getUniqueId(), Instant.now()).ifPresent(baneo ->
+                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, baneo.mensajeIngreso()));
     }
 }

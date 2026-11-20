@@ -2,19 +2,18 @@ package ErrorCapa8.skillIssueAdmin.listeners;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import java.net.http.WebSocket;
-
-public class connectionListener implements WebSocket.Listener {
+/** Da la bienvenida al jugador cuando entra al servidor. */
+public class connectionListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        player.sendMessage(Component.text("Hello there!").color(TextColor.color(NamedTextColor.GOLD)));
+        player.sendMessage(Component.text("¡Bienvenido a Skill Issue Admin, " + player.getName() + "!", NamedTextColor.GOLD));
+        player.sendMessage(Component.text("Usa /report para reportar a alguien y /profile para ver tu perfil.", NamedTextColor.GRAY));
     }
-
 }

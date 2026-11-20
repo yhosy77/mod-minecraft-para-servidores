@@ -4,6 +4,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 public final class Jugador {
+    /** Requisitos para subir gratis al rango Miembro (RF-11): nivel 10 o 500 monedas. */
+    public static final int NIVEL_MIN_MIEMBRO = 10;
+    public static final int MONEDAS_MIN_MIEMBRO = 500;
+
     private final UUID uuid;
     private String nombre;
     private String rangoId;
@@ -63,6 +67,32 @@ public final class Jugador {
 
     public void asignarRango(String rangoId) {
         this.rangoId = rangoId;
+    }
+
+    /**
+     * Sube al rango gratuito (RF-11). Con nivel 10 o más es gratis; si no, se pagan 500 monedas.
+     * No sirve para rangos exclusivos de pago ni para rangos de staff.
+     * @return true si subió; false si no cumple los requisitos o el rango no es válido.
+     */
+    public synchronized boolean subirRangoGratuito(Rango rangoMiembro) {
+        if (rangoMiembro == null || rangoMiembro.esPago() || rangoMiembro.getTipo() != TipoRango.PLAYER) return false;
+        if (nivel >= NIVEL_MIN_MIEMBRO) {
+            rangoId = rangoMiembro.getId();
+            return true;
+        }
+        if (monedas >= MONEDAS_MIN_MIEMBRO) {
+            monedas -= MONEDAS_MIN_MIEMBRO;
+            rangoId = rangoMiembro.getId();
+            return true;
+        }
+        return false;
+    }
+
+    /** Mensaje con lo que le falta para subir a Miembro. */
+    public synchronized String requisitosFaltantes() {
+        if (nivel >= NIVEL_MIN_MIEMBRO || monedas >= MONEDAS_MIN_MIEMBRO) return "Ya cumples los requisitos para ser Miembro.";
+        return "Te faltan " + (NIVEL_MIN_MIEMBRO - nivel) + " nivel(es) para llegar a nivel " + NIVEL_MIN_MIEMBRO
+                + ", o " + (MONEDAS_MIN_MIEMBRO - monedas) + " moneda(s) para tener " + MONEDAS_MIN_MIEMBRO + ".";
     }
 
     @Override

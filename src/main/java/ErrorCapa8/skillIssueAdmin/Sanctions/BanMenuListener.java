@@ -127,6 +127,8 @@ public final class BanMenuListener implements Listener {
             Baneo ban = sanciones.aplicarBaneo(menu.draft, admin);
             admin.closeInventory();
             admin.sendMessage(Component.text("§aBaneo aplicado y guardado para §f" + ban.getJugadorNombre() + "§a (" + ban.duracionTexto() + ")."));
+            if (ban.esPermanente() && menu.draft.getDuracion() != DuracionBaneo.PERMANENTE)
+                admin.sendMessage(Component.text("§eEl baneo subió a permanente por reincidencia o periodo de prueba (RF-07/RF-08)."));
         } catch (IOException exception) {
             admin.closeInventory();
             admin.sendMessage(Component.text("§cNo se pudo guardar el baneo; no se aplicó."));

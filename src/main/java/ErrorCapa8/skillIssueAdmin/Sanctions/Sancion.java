@@ -41,6 +41,7 @@ public abstract class Sancion {
     private final String motivo;
     private boolean activa;            // false = revocada (perdonada)
     private String motivoPerdon;
+    private Instant revocadaEn;        // cuándo se revocó (inicia el periodo de prueba de 30 días, RF-07)
 
     /** Constructor original de Felipe: se conserva para no romper Baneo ni la carga desde sanciones.yml. */
     protected Sancion(UUID id, UUID jugadorId, String jugadorNombre, UUID responsableId,
@@ -109,10 +110,17 @@ public abstract class Sancion {
         if (!activa) throw new SancionInvalidaException("La sanción #" + numero + " ya estaba revocada.");
         this.activa = false;
         this.motivoPerdon = motivoPerdon == null || motivoPerdon.isBlank() ? "Sin motivo especificado" : limpiar(motivoPerdon);
+        this.revocadaEn = Instant.now();
     }
 
     /** Revierte una revocación si no pudo persistirse, para no dejar el estado en memoria divergente. */
-    final void restaurarActiva() { this.activa = true; this.motivoPerdon = ""; }
+    final void restaurarActiva() { this.activa = true; this.motivoPerdon = ""; this.revocadaEn = null; }
+
+    /** Tipo de infracción (insultos, trampas, spam...). Baneo y Mute lo sobrescriben; Advertido no tiene. */
+    public CausaBaneo getTipoInfraccion() { return null; }
+
+    /** Nivel en la escala Mute → Baneo temporal → Baneo permanente (null si no aplica, como en Advertido). */
+    public NivelSeveridad getNivelEnEscala() { return null; }
 
     /** Por defecto una sanción no vence; Baneo y Mute lo sobrescriben según su duración. */
     public boolean haExpirado(Instant ahora) { return false; }
@@ -132,7 +140,8 @@ public abstract class Sancion {
         return getTipo() + SEPARADOR + numero + SEPARADOR + id + SEPARADOR + jugadorId + SEPARADOR
                 + limpiar(jugadorNombre) + SEPARADOR + responsableId + SEPARADOR + limpiar(responsableNombre) + SEPARADOR
                 + creadaEn.toEpochMilli() + SEPARADOR + vacioComoGuion(motivo) + SEPARADOR + activa + SEPARADOR
-                + vacioComoGuion(motivoPerdon) + SEPARADOR + datosExtra();
+                + vacioComoGuion(motivoPerdon) + SEPARADOR + datosExtra() + SEPARADOR
+                + (revocadaEn == null ? "-" : String.valueOf(revocadaEn.toEpochMilli()));
     }
 
     /** PersistenciaArchivo escribe toString(), así que devuelve la misma línea. */
@@ -157,23 +166,37 @@ public abstract class Sancion {
             String motivo = guionComoVacio(p[8]);
             boolean activa = Boolean.parseBoolean(p[9].trim());
             String perdon = guionComoVacio(p[10]);
+            Sancion sancion;
+            int posicionRevocada;   // la fecha de revocación va al final, después de los datos propios
             switch (tipo) {
                 case "BANEO":
                     if (p.length < 16) throw new SancionInvalidaException("Baneo incompleto: " + linea);
                     boolean permanente = Boolean.parseBoolean(p[14].trim());
                     Instant expiraEn = permanente ? null : Instant.ofEpochMilli(Long.parseLong(p[15].trim()));
-                    return new Baneo(numero, activa, perdon, id, jugadorId, jugadorNombre,
+                    sancion = new Baneo(numero, activa, perdon, id, jugadorId, jugadorNombre,
                             CausaBaneo.valueOf(p[11].trim()), guionComoVacio(p[12]), guionComoVacio(p[13]),
                             responsableId, responsableNombre, creadaEn, expiraEn, permanente);
+                    posicionRevocada = 16;
+                    break;
                 case "MUTE":
-                    return new Mute(id, numero, jugadorId, jugadorNombre, responsableId, responsableNombre,
-                            creadaEn, motivo, activa, perdon, Integer.parseInt(p[11].trim()), p[12].trim());
+                    // Las líneas antiguas no traen el tipo de infracción: se toma como OTRA.
+                    CausaBaneo infraccion = p.length > 13 && !p[13].trim().equals("-")
+                            ? CausaBaneo.valueOf(p[13].trim()) : CausaBaneo.OTRA;
+                    sancion = new Mute(id, numero, jugadorId, jugadorNombre, responsableId, responsableNombre,
+                            creadaEn, motivo, activa, perdon, Integer.parseInt(p[11].trim()), p[12].trim(), infraccion);
+                    posicionRevocada = 14;
+                    break;
                 case "ADVERTIDO":
-                    return new Advertido(id, numero, jugadorId, jugadorNombre, responsableId, responsableNombre,
+                    sancion = new Advertido(id, numero, jugadorId, jugadorNombre, responsableId, responsableNombre,
                             creadaEn, motivo, activa, perdon, Integer.parseInt(p[11].trim()), Boolean.parseBoolean(p[12].trim()));
+                    posicionRevocada = 13;
+                    break;
                 default:
                     throw new SancionInvalidaException("Tipo de sanción desconocido: " + tipo);
             }
+            if (p.length > posicionRevocada && !p[posicionRevocada].trim().equals("-"))
+                sancion.revocadaEn = Instant.ofEpochMilli(Long.parseLong(p[posicionRevocada].trim()));
+            return sancion;
         } catch (IllegalArgumentException exception) { // incluye NumberFormatException y UUID/enum inválidos
             throw new SancionInvalidaException("Dato inválido en la línea: " + linea);
         }
@@ -215,4 +238,5 @@ public abstract class Sancion {
     public String getAdminResponsable() { return responsableNombre; }
     public boolean isActiva() { return activa; }
     public String getMotivoPerdon() { return motivoPerdon; }
+    public Instant getRevocadaEn() { return revocadaEn; }
 }
