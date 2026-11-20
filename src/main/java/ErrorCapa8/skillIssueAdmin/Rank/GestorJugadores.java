@@ -84,6 +84,7 @@ public final class GestorJugadores {
         changed |= asegurarBase("admin", "ADMIN", TipoRango.ADMIN);
         changed |= asegurarBase("op", "OP", TipoRango.OP);
         changed |= asegurarBase("player", "PLAYER", TipoRango.PLAYER);
+        changed |= asegurarBase(RANGO_MIEMBRO, "Miembro", TipoRango.PLAYER);
         return changed;
     }
 
@@ -305,6 +306,68 @@ public final class GestorJugadores {
         guardar();
     }
 
+    // ------------------------------------------------------------------
+    // RF-02: registro manual de jugadores y estadísticas del juego
+    // ------------------------------------------------------------------
+
+    /** Id del rango gratuito al que se puede subir con nivel o monedas (RF-11). */
+    public static final String RANGO_MIEMBRO = "miembro";
+    /** NickName de Minecraft: letras, números y guion bajo, de 3 a 16 caracteres (RF-02). */
+    private static final Pattern NICK_VALIDO = Pattern.compile("[A-Za-z0-9_]{3,16}");
+
+    /**
+     * El administrador registra un jugador nuevo con sus atributos base (RF-02).
+     * @throws IllegalArgumentException si el NickName no es válido, ya existe, o el nivel/monedas son negativos.
+     */
+    public synchronized Jugador registrarJugadorManual(String nick, int nivel, long monedas) {
+        if (nick == null || !NICK_VALIDO.matcher(nick).matches())
+            throw new IllegalArgumentException("El NickName debe tener de 3 a 16 caracteres: letras, números o guion bajo.");
+        if (nivel < 0 || monedas < 0) throw new IllegalArgumentException("El nivel y las monedas no pueden ser negativos.");
+        org.bukkit.OfflinePlayer conocido = org.bukkit.Bukkit.getOfflinePlayerIfCached(nick);
+        UUID uuid = conocido != null ? conocido.getUniqueId()
+                : UUID.nameUUIDFromBytes(("OfflinePlayer:" + nick).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        Jugador jugador = new Jugador(uuid, nick, rangoPredeterminadoId, nivel, monedas, 0, java.time.Instant.now());
+        registrarJugador(jugador);   // valida que no se repita el UUID ni el NickName
+        return jugador;
+    }
+
+    /** Actualiza nivel (experiencia del juego) y horas jugadas cuando el jugador entra o sale. */
+    public synchronized void actualizarEstadisticasJuego(Player player) {
+        Jugador jugador = jugadoresPorUuid.get(player.getUniqueId());
+        if (jugador == null) return;
+        int nivel = Math.max(jugador.getNivel(), player.getLevel());
+        long horas = Math.max(jugador.getHorasJugadas(), player.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE) / 72000L);
+        if (nivel != jugador.getNivel() || horas != jugador.getHorasJugadas()) {
+            jugador.actualizarProgreso(nivel, jugador.getMonedas(), horas);
+            guardar();
+        }
+    }
+
+    /** El administrador asigna las monedas de un jugador. */
+    public synchronized void establecerMonedas(UUID uuid, long monedas) {
+        Jugador jugador = jugadoresPorUuid.get(uuid);
+        if (jugador == null) throw new IllegalArgumentException("El jugador no está registrado.");
+        if (monedas < 0) throw new IllegalArgumentException("Las monedas no pueden ser negativas.");
+        jugador.actualizarProgreso(jugador.getNivel(), monedas, jugador.getHorasJugadas());
+        guardar();
+    }
+
+    /**
+     * RF-11: sube al jugador al rango gratuito Miembro si cumple nivel 10 o 500 monedas (las monedas se descuentan).
+     * @throws IllegalStateException con lo que le falta, o si ya tiene un rango igual o superior.
+     */
+    public synchronized void subirRangoGratuito(UUID uuid) {
+        Jugador jugador = jugadoresPorUuid.get(uuid);
+        if (jugador == null) throw new IllegalStateException("No estás registrado en el servidor.");
+        Rango actual = rangos.get(jugador.getRangoId());
+        if (jugador.getRangoId().equals(RANGO_MIEMBRO)) throw new IllegalStateException("Ya eres Miembro.");
+        if (actual != null && actual.getTipo() != TipoRango.PLAYER)
+            throw new IllegalStateException("Tu rango actual (" + actual.getNombre() + ") ya es igual o superior a Miembro.");
+        if (!jugador.subirRangoGratuito(rangos.get(RANGO_MIEMBRO)))
+            throw new IllegalStateException(jugador.requisitosFaltantes());
+        guardar();
+    }
+
     public synchronized void cambiarEstilo(String rangoId, net.kyori.adventure.text.format.TextColor color,
                                            java.util.Set<net.kyori.adventure.text.format.TextDecoration> formatos) {
         Rango rango = rangos.get(rangoId);
@@ -325,7 +388,7 @@ public final class GestorJugadores {
         String fallbackId = switch (rango.getTipo()) {
             case ADMIN -> "admin";
             case OP, MOD -> "op";
-            case PLAYER -> rangoPredeterminadoId;
+            case PLAYER, EXCLUSIVO -> rangoPredeterminadoId;
         };
         for (Jugador jugador : jugadores) if (jugador.getRangoId().equals(rangoId)) jugador.asignarRango(fallbackId);
         rangos.remove(rangoId);
