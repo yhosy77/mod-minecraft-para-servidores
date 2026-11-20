@@ -15,6 +15,9 @@ commands:
   rank:
     description: Abre la gestión administrativa de rangos
     usage: /rank
+  profile:
+    description: Muestra el perfil registrado de un jugador
+    usage: /profile [jugador]
   ban:
     description: Abre el asistente gráfico para aplicar una sanción
     usage: /ban
