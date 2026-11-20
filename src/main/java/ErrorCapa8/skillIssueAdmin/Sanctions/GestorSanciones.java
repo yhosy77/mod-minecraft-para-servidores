@@ -203,17 +203,13 @@ public final class GestorSanciones {
     // Persistencia
     // ------------------------------------------------------------------
 
-    /** Guarda todo el historial en sanciones.txt. También se llama en onDisable(). */
+    /** Guarda todo el historial en sanciones.txt (guardarDatos de IPersistencia). También se llama en onDisable(). */
     public synchronized boolean guardar() {
         ArrayList<String> lineas = new ArrayList<>();
         for (Sancion s : historial) lineas.add(s.toLinea());
-        try {
-            persistencia.guardarRegistrosSanciones(lineas);
-            return true;
-        } catch (IOException exception) {
-            plugin.getLogger().log(Level.SEVERE, "No se pudo guardar " + ARCHIVO + ".", exception);
-            return false;
-        }
+        boolean guardado = persistencia.guardarDatos(ARCHIVO, lineas);
+        if (!guardado) plugin.getLogger().severe("No se pudo guardar " + ARCHIVO + ".");
+        return guardado;
     }
 
     /** Agrega la sanción y la guarda; si no se puede guardar, la deshace. */
@@ -227,26 +223,25 @@ public final class GestorSanciones {
         }
     }
 
-    /** Lee el formato actual y migra una sola vez el mapa de baneos del formato YAML anterior. */
+    /**
+     * Lee sanciones.txt (cargarDatos de IPersistencia) y pasa a ese archivo lo que haya quedado
+     * guardado en sanciones.yml (historial o baneos de versiones anteriores), sin repetir sanciones.
+     */
     private void cargar() {
+        Set<UUID> idsCargados = new HashSet<>();
+        for (String linea : persistencia.cargarDatos(ARCHIVO)) agregarDesdeLinea(linea, idsCargados);
+
+        int migrados = 0;
         try {
-            for (String linea : persistencia.cargarRegistrosSanciones()) {
-                try {
-                    historial.add(Sancion.desdeLinea(linea));
-                } catch (SancionInvalidaException exception) {
-                    plugin.getLogger().warning("Registro ignorado en " + ARCHIVO + ": " + exception.getMessage());
-                }
-            }
-            Set<UUID> idsCargados = new HashSet<>();
-            for (Sancion s : historial) idsCargados.add(s.getId());
-            int migrados = 0;
-            for (Baneo legado : persistencia.cargarBaneos()) {
+            for (String linea : persistencia.cargarRegistrosSanciones())
+                if (agregarDesdeLinea(linea, idsCargados)) migrados++;
+            for (Baneo legado : persistencia.cargarBaneos())
                 if (idsCargados.add(legado.getId())) { historial.add(legado); migrados++; }
-            }
-            if (migrados > 0 && guardar()) plugin.getLogger().info("Se migraron " + migrados + " baneos al historial unificado.");
         } catch (IOException exception) {
-            plugin.getLogger().log(Level.SEVERE, "No se pudo cargar el historial de sanciones.", exception);
+            plugin.getLogger().log(Level.WARNING, "No se pudo leer sanciones.yml para pasar las sanciones antiguas.", exception);
         }
+        if (migrados > 0 && guardar())
+            plugin.getLogger().info("Se pasaron " + migrados + " sanciones de sanciones.yml a " + ARCHIVO + ".");
 
         // Los baneos repetidos de sanciones.yml que se descartaron gastaron números: se liberan.
         int mayorNumero = 0;
@@ -256,5 +251,18 @@ public final class GestorSanciones {
         Instant ahora = Instant.now();
         for (Sancion s : historial) if (s.estaVigente(ahora)) sancionesActivas.add(s);
         plugin.getLogger().info("Se cargaron " + historial.size() + " sanciones (" + sancionesActivas.size() + " activas).");
+    }
+
+    /** Reconstruye una sanción desde su línea; devuelve false si está dañada o ya estaba cargada. */
+    private boolean agregarDesdeLinea(String linea, Set<UUID> idsCargados) {
+        try {
+            Sancion s = Sancion.desdeLinea(linea.trim());
+            if (!idsCargados.add(s.getId())) return false;
+            historial.add(s);
+            return true;
+        } catch (SancionInvalidaException exception) {
+            plugin.getLogger().warning("Registro ignorado en " + ARCHIVO + ": " + exception.getMessage());
+            return false;
+        }
     }
 }
