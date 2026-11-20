@@ -34,11 +34,11 @@ public final class SkillIssueAdmin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        reportManager = new ReportCreationManager(this);
+        IPersistencia persistenciaRangos = new PersistenciaArchivo(getDataFolder());
+        reportManager = new ReportCreationManager(this, persistenciaRangos);
         getServer().getPluginManager().registerEvents(new ReportMenuListener(this, reportManager), this);
         registerCommand("report", new ReportPlayer(reportManager));
         registerCommand("gestreports", new ReportAdminCommand(reportManager));
-        IPersistencia persistenciaRangos = new PersistenciaArchivo(getDataFolder());
         gestorJugadores = new GestorJugadores(this, persistenciaRangos);
         gestorSanciones = new GestorSanciones(this, persistenciaRangos, gestorJugadores);
         getServer().getPluginManager().registerEvents(new BanMenuListener(this, gestorJugadores, gestorSanciones), this);
