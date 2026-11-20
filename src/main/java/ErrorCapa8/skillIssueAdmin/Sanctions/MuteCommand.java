@@ -1,0 +1,55 @@
+package ErrorCapa8.skillIssueAdmin.Sanctions;
+
+import ErrorCapa8.skillIssueAdmin.SancionInvalidaException;
+import ErrorCapa8.skillIssueAdmin.Rank.GestorJugadores;
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import java.util.Arrays;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
+/** /mute <jugador> <minutos> <motivo...> : silencia a un jugador conectado. */
+public final class MuteCommand implements BasicCommand {
+    private final GestorJugadores jugadores;
+    private final GestorSanciones sanciones;
+    public MuteCommand(GestorJugadores jugadores, GestorSanciones sanciones) { this.jugadores = jugadores; this.sanciones = sanciones; }
+
+    @Override public void execute(CommandSourceStack source, String[] args) {
+        if (!(source.getExecutor() instanceof Player admin)) {
+            source.getSender().sendMessage(Component.text("Este comando solo puede usarlo un jugador."));
+            return;
+        }
+        if (!jugadores.esAdministrador(admin.getUniqueId())) {
+            admin.sendMessage(Component.text("No tienes permiso; se requiere el rango ADMIN.", NamedTextColor.RED));
+            return;
+        }
+        if (args.length < 3) {
+            admin.sendMessage(Component.text("Uso: /mute <jugador> <minutos> <motivo>", NamedTextColor.YELLOW));
+            return;
+        }
+        Player target = Bukkit.getPlayerExact(args[0]);
+        if (target == null) {
+            admin.sendMessage(Component.text("El jugador " + args[0] + " no está conectado.", NamedTextColor.RED));
+            return;
+        }
+        int minutos;
+        try {
+            minutos = Integer.parseInt(args[1]);
+        } catch (NumberFormatException exception) {
+            admin.sendMessage(Component.text("Los minutos deben ser un número entero.", NamedTextColor.RED));
+            return;
+        }
+        String motivo = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+        try {
+            Mute mute = new Mute(target.getUniqueId(), target.getName(), admin.getUniqueId(), admin.getName(),
+                    motivo, minutos, Mute.CANAL_GLOBAL);
+            sanciones.aplicarSancion(jugadores.buscarJugador(target.getUniqueId()), mute);
+            admin.sendMessage(Component.text("Mute #" + mute.getNumero() + " aplicado a " + target.getName()
+                    + " por " + minutos + " minuto(s).", NamedTextColor.GREEN));
+        } catch (SancionInvalidaException exception) {
+            admin.sendMessage(Component.text(exception.getMessage(), NamedTextColor.RED));
+        }
+    }
+}
