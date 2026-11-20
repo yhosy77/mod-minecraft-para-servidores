@@ -17,6 +17,11 @@ import ErrorCapa8.skillIssueAdmin.Sanctions.BanCommand;
 import ErrorCapa8.skillIssueAdmin.Sanctions.BanEnforcementListener;
 import ErrorCapa8.skillIssueAdmin.Sanctions.BanMenuListener;
 import ErrorCapa8.skillIssueAdmin.Sanctions.GestorSanciones;
+import ErrorCapa8.skillIssueAdmin.Sanctions.MuteCommand;
+import ErrorCapa8.skillIssueAdmin.Sanctions.MuteEnforcementListener;
+import ErrorCapa8.skillIssueAdmin.Sanctions.PerdonarCommand;
+import ErrorCapa8.skillIssueAdmin.Sanctions.SancionesCommand;
+import ErrorCapa8.skillIssueAdmin.Sanctions.WarnCommand;
 
 public final class SkillIssueAdmin extends JavaPlugin {
     private ReportCreationManager reportManager;
@@ -37,6 +42,12 @@ public final class SkillIssueAdmin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BanMenuListener(this, gestorJugadores, gestorSanciones), this);
         getServer().getPluginManager().registerEvents(new BanEnforcementListener(gestorSanciones), this);
         registerCommand("ban", new BanCommand(gestorJugadores));
+        // Sanciones: mute, advertencias, historial y perdón
+        getServer().getPluginManager().registerEvents(new MuteEnforcementListener(gestorSanciones), this);
+        registerCommand("mute", new MuteCommand(gestorJugadores, gestorSanciones));
+        registerCommand("warn", new WarnCommand(gestorJugadores, gestorSanciones));
+        registerCommand("sanciones", new SancionesCommand(gestorJugadores, gestorSanciones));
+        registerCommand("perdonar", new PerdonarCommand(gestorJugadores, gestorSanciones));
         rankDisplayManager = new RankDisplayManager(this, gestorJugadores);
         rankPermissionManager = new RankPermissionManager(this, gestorJugadores);
         getServer().getPluginManager().registerEvents(rankDisplayManager, this);
@@ -55,6 +66,7 @@ public final class SkillIssueAdmin extends JavaPlugin {
     public void onDisable() {
         if (rankDisplayManager != null) rankDisplayManager.shutdown();
         if (rankPermissionManager != null) rankPermissionManager.clearAll();
+        if (gestorSanciones != null) gestorSanciones.guardar();
         getLogger().info("Skill Issue Admin deshabilitado.");
     }
 }
