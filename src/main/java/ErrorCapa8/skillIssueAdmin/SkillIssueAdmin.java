@@ -65,6 +65,7 @@ public final class SkillIssueAdmin extends JavaPlugin {
         registerCommand("donar", new DonarCommand(gestorTransacciones));
         registerCommand("donaciones", new DonacionesCommand(gestorJugadores, gestorTransacciones));
         registerCommand("comprarango", new ComprarRangoCommand(gestorJugadores, gestorTransacciones, rankDisplayManager, rankPermissionManager));
+        registerCommand("estadisticas", new EstadisticasCommand(gestorJugadores, gestorSanciones, reportManager));
         getServer().getOnlinePlayers().forEach(player -> {
             gestorJugadores.registrarOActualizarJugador(player);
             rankPermissionManager.apply(player);

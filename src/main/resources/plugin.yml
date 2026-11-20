@@ -33,6 +33,9 @@ commands:
   comprarango:
     description: Registra la compra de un rango exclusivo (solo ADMIN)
     usage: /comprarango <jugador> <rango> <valor>
+  estadisticas:
+    description: Resumen de sanciones y reportes atendidos por cada admin (solo ADMIN)
+    usage: /estadisticas [días]
   ban:
     description: Abre el asistente gráfico para aplicar una sanción
     usage: /ban
