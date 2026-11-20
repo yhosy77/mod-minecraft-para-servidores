@@ -18,6 +18,12 @@ commands:
   profile:
     description: Muestra el perfil registrado de un jugador
     usage: /profile [jugador]
+  jugador:
+    description: Registra un jugador nuevo o ajusta sus monedas (solo ADMIN)
+    usage: /jugador registrar <nick> [nivel] [monedas] | /jugador monedas <nick> <cantidad>
+  subirrango:
+    description: Sube gratis al rango Miembro con nivel 10 o 500 monedas
+    usage: /subirrango
   ban:
     description: Abre el asistente gráfico para aplicar una sanción
     usage: /ban
