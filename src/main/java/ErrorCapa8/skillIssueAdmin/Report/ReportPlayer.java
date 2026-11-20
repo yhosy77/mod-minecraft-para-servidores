@@ -1,37 +1,64 @@
 package ErrorCapa8.skillIssueAdmin.Report;
 
-import io.papermc.paper.command.brigadier.BasicCommand;
+import ErrorCapa8.skillIssueAdmin.ComandoBase;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
-import net.kyori.adventure.text.Component;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public final class ReportPlayer implements BasicCommand {
+/**
+ * /report                     -> menú para elegir jugador y motivo
+ * /report <jugador>           -> menú de motivos para ese jugador
+ * /report <jugador> <motivo>  -> crea el reporte directamente con el motivo escrito (RF-01)
+ */
+public final class ReportPlayer extends ComandoBase {
     private final ReportCreationManager manager;
-    public ReportPlayer(ReportCreationManager manager) { this.manager = manager; }
-    @Override public void execute(CommandSourceStack source, String[] args) {
-        if (!(source.getExecutor() instanceof Player player)) {
-            source.getSender().sendMessage(Component.text("§cEste comando solo puede usarlo un jugador."));
-            return;
-        }
-        if (args.length > 1) { player.sendMessage(Component.text("§cUso: /report [jugador]")); return; }
-        Player target = null;
-        if (args.length == 1) {
-            target = Bukkit.getOnlinePlayers().stream().filter(p -> p.getName().equalsIgnoreCase(args[0])).findFirst().orElse(null);
-            if (target == null) { player.sendMessage(Component.text("§cNo existe ese usuario o no está conectado.")); return; }
-        }
-        long remaining = manager.remainingCooldownMillis(player.getUniqueId());
-        if (remaining > 0) {
-            long seconds = (remaining + 999) / 1000;
-            player.sendMessage(Component.text("§cEspera " + (seconds / 60) + " min " + (seconds % 60) + " s para enviar otro reporte."));
-            return;
-        }
-        player.openInventory(target == null ? new ReportMenu(0).getInventory()
-                : new ReportTypeMenu(target.getUniqueId(), target.getName()).getInventory());
+
+    public ReportPlayer(ReportCreationManager manager) {
+        super("report", "Reporta a un jugador por conducta indebida");
+        this.manager = manager;
     }
-    @Override public java.util.Collection<String> suggest(CommandSourceStack source, String[] args) {
-        if (args.length != 1) return java.util.List.of();
-        String prefix = args[0].toLowerCase(java.util.Locale.ROOT);
-        return Bukkit.getOnlinePlayers().stream().map(Player::getName).filter(name -> name.toLowerCase(java.util.Locale.ROOT).startsWith(prefix)).toList();
+
+    @Override protected void ejecutarComando(CommandSourceStack source, String[] args) {
+        Player player = jugador(source);
+        if (args.length == 0) {
+            if (enEspera(player)) return;
+            player.openInventory(new ReportMenu(0, player.getUniqueId()).getInventory());
+            return;
+        }
+        Player target = Bukkit.getOnlinePlayers().stream().filter(p -> p.getName().equalsIgnoreCase(args[0])).findFirst().orElse(null);
+        if (target == null) { error(player, "No existe ese usuario o no está conectado."); return; }
+        if (target.getUniqueId().equals(player.getUniqueId())) { error(player, "No puedes reportarte a ti mismo."); return; }
+        if (args.length == 1) {
+            if (enEspera(player)) return;
+            player.openInventory(new ReportTypeMenu(target.getUniqueId(), target.getName()).getInventory());
+            return;
+        }
+        String motivo = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        try {
+            PlayerReport report = manager.crearReporte(player, target, ReportType.OTHER, motivo);
+            exito(player, "Reporte #" + report.numero() + " guardado contra " + target.getName() + ". El staff lo revisará.");
+            ReportMenuListener.avisarStaff(target.getName());
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            error(player, exception.getMessage());
+        }
+    }
+
+    private boolean enEspera(Player player) {
+        long remaining = manager.remainingCooldownMillis(player.getUniqueId());
+        if (remaining <= 0) return false;
+        long seconds = (remaining + 999) / 1000;
+        error(player, "Espera " + (seconds / 60) + " min " + (seconds % 60) + " s para enviar otro reporte.");
+        return true;
+    }
+
+    @Override public Collection<String> suggest(CommandSourceStack source, String[] args) {
+        if (args.length != 1) return List.of();
+        String prefix = args[0].toLowerCase(Locale.ROOT);
+        return Bukkit.getOnlinePlayers().stream().map(Player::getName)
+                .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(prefix)).toList();
     }
 }

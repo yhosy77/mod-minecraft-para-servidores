@@ -25,11 +25,11 @@ public final class ReportMenuListener implements Listener {
         int slot = event.getRawSlot();
         if (holder instanceof ReportMenu menu) {
             if (slot == 49) { player.closeInventory(); return; }
-            if (slot == 45 && menu.page() > 0) { player.openInventory(new ReportMenu(menu.page() - 1).getInventory()); return; }
-            if (slot == 53) { player.openInventory(new ReportMenu(menu.page() + 1).getInventory()); return; }
+            if (slot == 45 && menu.page() > 0) { player.openInventory(new ReportMenu(menu.page() - 1, player.getUniqueId()).getInventory()); return; }
+            if (slot == 53) { player.openInventory(new ReportMenu(menu.page() + 1, player.getUniqueId()).getInventory()); return; }
             int itemIndex = ReportMenu.playerAt(slot);
             if (itemIndex < 0) return;
-            List<Player> players = ReportMenu.onlinePlayers();
+            List<Player> players = ReportMenu.onlinePlayers(player.getUniqueId());
             int targetIndex = menu.page() * ReportMenu.PAGE_SIZE + itemIndex;
             if (targetIndex >= players.size()) return;
             Player target = players.get(targetIndex);
@@ -38,21 +38,19 @@ public final class ReportMenuListener implements Listener {
         }
         if (holder instanceof ReportTypeMenu menu) {
             if (slot == 31) { player.closeInventory(); return; }
-            if (slot == 27) { player.openInventory(new ReportMenu(0).getInventory()); return; }
+            if (slot == 27) { player.openInventory(new ReportMenu(0, player.getUniqueId()).getInventory()); return; }
             ReportType type = ReportTypeMenu.typeAt(slot);
             if (type == null) return;
-            Player target = Bukkit.getPlayer(menu.targetId());
-            if (target == null) { player.closeInventory(); player.sendMessage(Component.text("§cEse usuario ya no está conectado.")); return; }
-            if (!manager.submit(player, target, type)) {
-                player.closeInventory();
-                long seconds = (manager.remainingCooldownMillis(player.getUniqueId()) + 999) / 1000;
-                player.sendMessage(Component.text("§cEspera " + (seconds / 60) + " min " + (seconds % 60) + " s para enviar otro reporte."));
-                return;
-            }
             player.closeInventory();
-            player.sendMessage(Component.text("§aReporte guardado contra §f" + target.getName() + " §7por §e" + type.label() + "§a."));
-            for (Player staff : Bukkit.getOnlinePlayers()) if (staff.hasPermission("skillissueadmin.reports"))
-                staff.sendMessage(Component.text("§6Nuevo reporte: §f" + target.getName() + " §7(usa /gestreports)"));
+            Player target = Bukkit.getPlayer(menu.targetId());
+            if (target == null) { player.sendMessage(Component.text("§cEse usuario ya no está conectado.")); return; }
+            try {
+                PlayerReport report = manager.crearReporte(player, target, type, type.label());
+                player.sendMessage(Component.text("§aReporte #" + report.numero() + " guardado contra §f" + target.getName() + " §7por §e" + type.label() + "§a."));
+                avisarStaff(target.getName());
+            } catch (IllegalArgumentException | IllegalStateException exception) {
+                player.sendMessage(Component.text("§c" + exception.getMessage()));
+            }
             return;
         }
         if (holder instanceof ReportAdminMenu menu) {
@@ -62,9 +60,15 @@ public final class ReportMenuListener implements Listener {
             PlayerReport report = menu.reportAt(slot);
             if (report == null) return;
             if (event.isRightClick()) {
-                boolean resolved = !report.resolved();
-                manager.setResolved(report, resolved, player.getName());
-                player.sendMessage(Component.text(resolved ? "§aReporte marcado como resuelto." : "§eReporte reabierto."));
+                // Clic derecho: avanza el estado. Mayús + clic derecho: descarta (RF-06).
+                EstadoReporte nuevo = event.isShiftClick() ? EstadoReporte.DESCARTADO : report.estado().siguiente();
+                try {
+                    if (nuevo == null) throw new IllegalStateException("El reporte #" + report.numero() + " ya está cerrado y no se puede reabrir.");
+                    manager.resolverReporte(report, nuevo, player.getName());
+                    player.sendMessage(Component.text("§aReporte #" + report.numero() + " ahora está: " + nuevo.etiqueta() + "."));
+                } catch (IllegalStateException exception) {
+                    player.sendMessage(Component.text("§c" + exception.getMessage()));
+                }
             } else {
                 ReportPriority next = report.priority().next(event.isShiftClick() ? -1 : 1);
                 manager.setPriority(report, next);
@@ -72,6 +76,12 @@ public final class ReportMenuListener implements Listener {
             }
             player.openInventory(new ReportAdminMenu(manager, menu.page()).getInventory());
         }
+    }
+
+    /** Avisa a los admins conectados que llegó un reporte nuevo. */
+    static void avisarStaff(String reportado) {
+        for (Player staff : Bukkit.getOnlinePlayers()) if (staff.hasPermission("skillissueadmin.reports"))
+            staff.sendMessage(Component.text("§6Nuevo reporte: §f" + reportado + " §7(usa /gestreports)"));
     }
 
     @EventHandler
