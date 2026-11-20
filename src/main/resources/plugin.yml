@@ -18,6 +18,18 @@ commands:
   ban:
     description: Abre el asistente gráfico para aplicar una sanción
     usage: /ban
+  mute:
+    description: Silencia a un jugador en el chat por unos minutos
+    usage: /mute <jugador> <minutos> <motivo>
+  warn:
+    description: Envía una advertencia visual y sonora a un jugador
+    usage: /warn <jugador> <severidad 1-3> <motivo>
+  sanciones:
+    description: Muestra el historial de sanciones y la reincidencia de un jugador
+    usage: /sanciones <jugador>
+  perdonar:
+    description: Revoca una sanción por su número
+    usage: /perdonar <numero> [motivo]
 permissions:
   skillissueadmin.reports:
     description: Permite revisar y gestionar reportes
