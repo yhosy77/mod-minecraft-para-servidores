@@ -7,10 +7,10 @@ load: POSTWORLD
 commands:
   report:
     description: Abre el sistema o reporta a un jugador por nombre
-    usage: /report [jugador]
+    usage: /report [jugador] [motivo]
   gestreports:
-    description: Abre la bandeja administrativa de reportes
-    usage: /gestreports
+    description: Abre la bandeja de reportes o los filtra por estado o fechas
+    usage: /gestreports [estado <estado> | fechas <desde> <hasta> [estado]]
     permission: skillissueadmin.reports
   rank:
     description: Abre la gestión administrativa de rangos
@@ -23,7 +23,7 @@ commands:
     usage: /ban
   mute:
     description: Silencia a un jugador en el chat por unos minutos
-    usage: /mute <jugador> <minutos> <motivo>
+    usage: /mute <jugador> <minutos> <insultos|trampas|spam|toxicidad|exploits|otra> <motivo>
   warn:
     description: Envía una advertencia visual y sonora a un jugador
     usage: /warn <jugador> <severidad 1-3> <motivo>
@@ -31,8 +31,8 @@ commands:
     description: Muestra el historial de sanciones y la reincidencia de un jugador
     usage: /sanciones <jugador>
   perdonar:
-    description: Revoca una sanción por su número
-    usage: /perdonar <numero> [motivo]
+    description: Revoca una sanción por su número; el jugador queda Advertido 30 días
+    usage: /perdonar <numero> <justificación>
 permissions:
   skillissueadmin.reports:
     description: Permite revisar y gestionar reportes
