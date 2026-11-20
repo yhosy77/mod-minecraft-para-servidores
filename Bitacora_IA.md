@@ -85,22 +85,21 @@ Para la primera versión se recomendó priorizar la creación del inventario de 
 ### Claude
 Contexto del problema:
 
-Al hacer merge de las ramas de todos los integrantes hacia main, surgieron conflictos de integración y errores de compilación. Teníamos varias clases con nombres de métodos distintos que intentaban conectarse entre sí, imports rotos y dudas sobre cuál era la mejor forma de estructurar la comunicación entre los módulos sin tener que reescribir la lógica que cada uno ya tenía avanzada.
+Al hacer merge de las ramas de todos los integrantes hacia main, surgieron conflictos de integración y errores de compilación. Teníamos varias clases con nombres de métodos distintos que intentaban conectarse entre sí e imports rotos. Además, estábamos bloqueados con la implementación del último requerimiento del proyecto, ya que no estábamos seguros de cómo abordarlo y a ninguno en el equipo se le ocurría una forma clara de estructurarlo sin romper lo que ya funcionaba.
 
 Prompt / Consulta realizada a la IA:
 
-"Estamos juntando las ramas de nuestro proyecto en equipo y el código no compila. Tenemos conflictos entre las clases de diferentes módulos porque cada uno nombró los métodos y parámetros de forma distinta, y además nos están saltando errores de referencia circular en los imports. No queremos rehacer todo desde cero, ¿cómo podemos conectar estas clases para que compilen bien y qué patrón o estructura nos recomiendas para que los módulos se comuniquen sin acoplarse tanto?"
+"Estamos juntando las ramas de nuestro proyecto en equipo y el código no compila. Tenemos conflictos entre las clases de diferentes módulos porque cada uno nombró los métodos y parámetros de forma distinta, y además nos están saltando errores de referencia circular en los imports. Por otro lado, nos falta implementar el último requerimiento del proyecto pero estamos bloqueados y no sabemos cómo enfocarlo ni dónde conectarlo. ¿Cómo podemos conectar estas clases para que compilen bien sin rehacer todo y qué estructura nos recomiendas para implementar ese último requerimiento?"
 
 Resumen de la respuesta obtenida:
 
-La IA nos sugirió no modificar la lógica interna de cada integrante, sino crear una clase intermedia (tipo Controller o fachada) que se encargue de recibir los datos de un módulo, adaptarlos y pasárselos al otro. También nos explicó cómo resolver los errores de compilación organizando los imports y unificando las firmas de los métodos públicos en una interfaz común. Y Nos guio paso a paso para subir todo al github.
+La IA nos sugirió no modificar la lógica interna de cada integrante, sino crear una clase intermedia (tipo Controller o fachada) para adaptar los datos entre módulos y limpiar los imports cruzados. Para el último requerimiento, nos propuso una idea base sobre cómo dividirlo en pasos lógicos y en qué punto del flujo principal integrarlo para aprovechar las clases que ya teníamos creadas.
 
 Aplicación en el proyecto (Lo que hicimos nosotros):
 
-Lo que tomamos de la IA: Aplicamos la idea de la clase controladora para centralizar las llamadas entre módulos y seguimos su guía para limpiar los imports cruzados que bloqueaban la compilación.
+Lo que tomamos de la IA: Aplicamos la idea de la clase controladora para centralizar las llamadas entre módulos, seguimos su guía para resolver los errores de compilación y usamos su enfoque inicial como punto de partida para destrabarnos con el último requerimiento.
 
-Lo que ajustamos manualmente: La IA propuso una estructura genérica que no contemplaba las validaciones específicas de nuestros datos ni los casos borde del proyecto. Tuvimos que adaptar manualmente los tipos de retorno, corregir los conflictos línea por línea en Git y ajustar la lógica de conexión para que respetara los requerimientos exactos de la entrega.
-
+Lo que ajustamos manualmente: La IA dio una solución muy general tanto para la conexión como para el último requerimiento, sin tener en cuenta las validaciones específicas ni los casos borde de nuestro proyecto. Nosotros nos encargamos de programar la lógica real del último requerimiento, adaptar manualmente los tipos de retorno, resolver los conflictos línea por línea en Git y hacer las pruebas finales para que cumpliera con todos los criterios de la entrega.
 ### Reporte de IA: Felipe Camacho
 
 `Inteligencia Artificial Usada`: ChatGPT - Codex.
