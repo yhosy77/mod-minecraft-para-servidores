@@ -1,7 +1,12 @@
 package ErrorCapa8.skillIssueAdmin.Rank;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -10,17 +15,85 @@ import java.util.Map;
 import java.util.HashMap;
 import ErrorCapa8.skillIssueAdmin.Sanctions.Baneo;
 import ErrorCapa8.skillIssueAdmin.Sanctions.CausaBaneo;
+import java.time.Instant;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public final class PersistenciaArchivo implements IPersistencia {
+    private final File carpetaDatos;
     private final File archivo;
     private final File archivoSanciones;
+
     public PersistenciaArchivo(File carpetaDatos) {
-        archivo = new File(carpetaDatos, "rangos.yml");
-        archivoSanciones = new File(carpetaDatos, "sanciones.yml");
+        this.carpetaDatos = carpetaDatos == null ? new File("datos") : carpetaDatos;
+        this.archivo = new File(this.carpetaDatos, "rangos.yml");
+        this.archivoSanciones = new File(this.carpetaDatos, "sanciones.yml");
+    }
+
+    public PersistenciaArchivo(String rutaBase) {
+        this(new File(rutaBase == null || rutaBase.isBlank() ? "datos" : rutaBase.trim()));
+    }
+
+    private File resolverArchivo(String nombreArchivo) {
+        if (nombreArchivo == null || nombreArchivo.isBlank()) {
+            throw new IllegalArgumentException("El nombre del archivo no puede estar vacío.");
+        }
+        String soloNombre = new File(nombreArchivo.trim()).getName();
+        if (soloNombre.isBlank()) {
+            throw new IllegalArgumentException("El nombre del archivo no es válido.");
+        }
+        return new File(carpetaDatos, soloNombre);
+    }
+
+    @Override
+    public boolean verificarArchivo(String nombreArchivo) {
+        if (nombreArchivo == null || nombreArchivo.isBlank()) return false;
+        File objetivo = resolverArchivo(nombreArchivo);
+        return objetivo.exists() && objetivo.isFile();
+    }
+
+    @Override
+    public boolean guardarDatos(String nombreArchivo, List<?> datos) {
+        if (nombreArchivo == null || nombreArchivo.isBlank() || datos == null) return false;
+        try {
+            if (!carpetaDatos.exists() && !carpetaDatos.mkdirs()) {
+                return false;
+            }
+            File objetivo = resolverArchivo(nombreArchivo);
+            try (PrintWriter writer = new PrintWriter(new FileWriter(objetivo, StandardCharsets.UTF_8))) {
+                for (Object elemento : datos) {
+                    if (elemento != null) {
+                        writer.println(elemento.toString());
+                    }
+                }
+            }
+            return true;
+        } catch (IOException exception) {
+            System.err.println("Error al guardar datos en " + nombreArchivo + ": " + exception.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public ArrayList<String> cargarDatos(String nombreArchivo) {
+        ArrayList<String> lineas = new ArrayList<>();
+        if (!verificarArchivo(nombreArchivo)) {
+            return lineas;
+        }
+        File objetivo = resolverArchivo(nombreArchivo);
+        try (BufferedReader reader = new BufferedReader(new FileReader(objetivo, StandardCharsets.UTF_8))) {
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                if (!linea.isBlank()) {
+                    lineas.add(linea.trim());
+                }
+            }
+        } catch (IOException exception) {
+            System.err.println("Error al cargar datos desde " + nombreArchivo + ": " + exception.getMessage());
+        }
+        return lineas;
     }
 
     @Override public PersistenciaDatos cargar() throws IOException {
@@ -50,7 +123,12 @@ public final class PersistenciaArchivo implements IPersistencia {
             String path = "jugadores." + uuidText + ".";
             String nombre = yaml.getString(path + "nombre");
             String rangoId = yaml.getString(path + "rango");
-            if (nombre != null && rangoId != null) jugadores.add(new Jugador(UUID.fromString(uuidText), nombre, rangoId));
+            if (nombre != null && rangoId != null) {
+                long fechaIngreso = yaml.getLong(path + "fechaIngreso", System.currentTimeMillis());
+                jugadores.add(new Jugador(UUID.fromString(uuidText), nombre, rangoId,
+                        yaml.getInt(path + "nivel", 1), yaml.getLong(path + "monedas", 0),
+                        yaml.getLong(path + "horasJugadas", 0), Instant.ofEpochMilli(fechaIngreso)));
+            }
         }
         return new PersistenciaDatos(rangos, jugadores, yaml.getString("rangoPredeterminado", "player"));
     }
@@ -72,6 +150,10 @@ public final class PersistenciaArchivo implements IPersistencia {
             String path = "jugadores." + jugador.getUuid() + ".";
             yaml.set(path + "nombre", jugador.getNombre());
             yaml.set(path + "rango", jugador.getRangoId());
+            yaml.set(path + "nivel", jugador.getNivel());
+            yaml.set(path + "monedas", jugador.getMonedas());
+            yaml.set(path + "horasJugadas", jugador.getHorasJugadas());
+            yaml.set(path + "fechaIngreso", jugador.getFechaIngreso().toEpochMilli());
         }
         File parent = archivo.getParentFile();
         if (!parent.exists() && !parent.mkdirs()) throw new IOException("No se pudo crear la carpeta de datos del plugin.");
@@ -107,6 +189,22 @@ public final class PersistenciaArchivo implements IPersistencia {
     private String valueOrEmpty(Map<?, ?> data, String key) {
         Object value = data.get(key);
         return value == null ? "" : String.valueOf(value);
+    }
+
+    @Override public List<String> cargarRegistrosSanciones() throws IOException {
+        if (!archivoSanciones.exists()) return List.of();
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(archivoSanciones);
+        return List.copyOf(yaml.getStringList("sanciones.historial"));
+    }
+
+    @Override public void guardarRegistrosSanciones(Collection<String> registros) throws IOException {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("version", 2);
+        yaml.set("sanciones.version", 2);
+        yaml.set("sanciones.historial", new ArrayList<>(registros));
+        File parent = archivoSanciones.getParentFile();
+        if (!parent.exists() && !parent.mkdirs()) throw new IOException("No se pudo crear la carpeta de sanciones.");
+        yaml.save(archivoSanciones);
     }
 
     @Override public void guardarBaneos(Collection<Baneo> baneos) throws IOException {
