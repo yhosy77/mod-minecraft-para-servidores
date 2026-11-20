@@ -1,7 +1,12 @@
 package ErrorCapa8.skillIssueAdmin.Rank;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -18,9 +23,34 @@ import org.bukkit.configuration.file.YamlConfiguration;
 public final class PersistenciaArchivo implements IPersistencia {
     private final File archivo;
     private final File archivoSanciones;
+    private final File archivoRegistrosSanciones;
     public PersistenciaArchivo(File carpetaDatos) {
         archivo = new File(carpetaDatos, "rangos.yml");
         archivoSanciones = new File(carpetaDatos, "sanciones.yml");
+        archivoRegistrosSanciones = new File(carpetaDatos, "sanciones.txt");
+    }
+
+    /** Lee sanciones.txt: devuelve las líneas no vacías (lista vacía si el archivo aún no existe). */
+    @Override public List<String> cargarRegistrosSanciones() throws IOException {
+        if (!archivoRegistrosSanciones.exists()) return new ArrayList<>();
+        List<String> registros = new ArrayList<>();
+        try (BufferedReader lector = new BufferedReader(new FileReader(archivoRegistrosSanciones, StandardCharsets.UTF_8))) {
+            String linea;
+            while ((linea = lector.readLine()) != null) {
+                if (!linea.isBlank()) registros.add(linea.trim());
+            }
+        }
+        return registros;
+    }
+
+    /** Escribe sanciones.txt completo con una línea por sanción. */
+    @Override public void guardarRegistrosSanciones(List<String> registros) throws IOException {
+        File parent = archivoRegistrosSanciones.getParentFile();
+        if (!parent.exists() && !parent.mkdirs()) throw new IOException("No se pudo crear la carpeta de sanciones.");
+        try (PrintWriter salida = new PrintWriter(new FileWriter(archivoRegistrosSanciones, StandardCharsets.UTF_8))) {
+            for (String registro : registros) salida.println(registro);
+            if (salida.checkError()) throw new IOException("Error al escribir " + archivoRegistrosSanciones.getName());
+        }
     }
 
     @Override public PersistenciaDatos cargar() throws IOException {

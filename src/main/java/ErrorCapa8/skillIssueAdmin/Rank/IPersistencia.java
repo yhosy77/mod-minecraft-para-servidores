@@ -10,4 +10,8 @@ public interface IPersistencia {
     void guardar(Collection<Rango> rangos, Collection<Jugador> jugadores, String rangoPredeterminadoId) throws IOException;
     List<Baneo> cargarBaneos() throws IOException;
     void guardarBaneos(Collection<Baneo> baneos) throws IOException;
+
+    /** Historial de sanciones en texto plano (sanciones.txt): una línea por sanción. */
+    List<String> cargarRegistrosSanciones() throws IOException;
+    void guardarRegistrosSanciones(List<String> registros) throws IOException;
 }
