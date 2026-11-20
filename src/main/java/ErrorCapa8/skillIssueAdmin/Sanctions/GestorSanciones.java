@@ -1,38 +1,60 @@
 package ErrorCapa8.skillIssueAdmin.Sanctions;
 
-import ErrorCapa8.skillIssueAdmin.Rank.GestorJugadores;
+import ErrorCapa8.skillIssueAdmin.SancionInvalidaException;
 import ErrorCapa8.skillIssueAdmin.Rank.IPersistencia;
+import ErrorCapa8.skillIssueAdmin.Rank.GestorJugadores;
+import ErrorCapa8.skillIssueAdmin.Rank.Jugador;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * Administra todas las sanciones del servidor (Baneo, Mute, Advertido).
+ *
+ * - historial: TODAS las sanciones (vigentes, vencidas y revocadas). Es lo que se guarda.
+ * - sancionesActivas: solo las vigentes.
+ *
+ * Persistencia (IPersistencia):
+ * - Todas las sanciones se guardan en sanciones.txt, una línea por sanción.
+ *   Se carga en el constructor y se guarda después de cada cambio.
+ * - Los baneos que existían en el sanciones.yml anterior se pasan una sola vez a sanciones.txt.
+ */
 public final class GestorSanciones {
+    public static final String ARCHIVO = "sanciones.txt";
+
     private final JavaPlugin plugin;
     private final IPersistencia persistencia;
     private final GestorJugadores gestorJugadores;
-    private final List<Baneo> baneos = new ArrayList<>();
+    private final ArrayList<Sancion> historial = new ArrayList<>();
+    private final ArrayList<Sancion> sancionesActivas = new ArrayList<>();
 
     public GestorSanciones(JavaPlugin plugin, IPersistencia persistencia, GestorJugadores gestorJugadores) {
         this.plugin = plugin; this.persistencia = persistencia; this.gestorJugadores = gestorJugadores;
-        try { baneos.addAll(persistencia.cargarBaneos()); }
-        catch (IOException exception) { plugin.getLogger().log(Level.SEVERE, "No se pudieron cargar los baneos persistidos.", exception); }
-        plugin.getLogger().info("Se cargaron " + baneos.size() + " registros de baneo.");
+        cargar();
     }
 
+    // ------------------------------------------------------------------
+    // Métodos originales de Felipe (usados por el menú de /ban y BanEnforcementListener)
+    // ------------------------------------------------------------------
+
     public synchronized List<Baneo> obtenerBaneos() {
-        return baneos.stream().sorted(Comparator.comparing(Sancion::getCreadaEn).reversed()).toList();
+        return historial.stream().filter(s -> s instanceof Baneo).map(s -> (Baneo) s)
+                .sorted(Comparator.comparing(Sancion::getCreadaEn).reversed()).toList();
     }
 
     public synchronized Optional<Baneo> obtenerBaneoActivo(UUID jugadorId, Instant ahora) {
-        return baneos.stream().filter(b -> b.getJugadorId().equals(jugadorId) && b.estaActivo(ahora))
+        return historial.stream().filter(s -> s instanceof Baneo).map(s -> (Baneo) s)
+                .filter(b -> b.getJugadorId().equals(jugadorId) && b.estaVigente(ahora))
                 .max(Comparator.comparing(Sancion::getCreadaEn));
     }
 
@@ -51,13 +73,188 @@ public final class GestorSanciones {
         Baneo baneo = new Baneo(UUID.randomUUID(), target.getUniqueId(), target.getName(), draft.getCausa(),
                 draft.getDetalleCausa(), draft.getMensaje(), administrador.getUniqueId(), administrador.getName(),
                 createdAt, expiresAt, draft.getDuracion() == DuracionBaneo.PERMANENTE);
-        baneos.add(baneo);
-        try { persistencia.guardarBaneos(baneos); }
-        catch (IOException exception) {
-            baneos.remove(baneo);
-            throw exception;
-        }
-        target.kick(baneo.mensajeKick());
+        registrarYGuardar(baneo);
+
+        // Polimorfismo: el efecto lo decide la propia sanción (Baneo -> kick).
+        if (!baneo.aplicarEfecto(gestorJugadores.buscarJugador(target.getUniqueId()))) target.kick(baneo.mensajeKick());
         return baneo;
+    }
+
+    // ------------------------------------------------------------------
+    // Métodos del módulo de sanciones
+    // ------------------------------------------------------------------
+
+    /**
+     * Registra cualquier sanción (Baneo, Mute o Advertido), la guarda y aplica su efecto.
+     * @throws SancionInvalidaException si los datos no son válidos, el jugador ya tiene una
+     *         sanción del mismo tipo vigente (baneo o mute) o no se pudo guardar.
+     */
+    public synchronized void aplicarSancion(Jugador j, Sancion s) throws SancionInvalidaException {
+        if (j == null) throw new SancionInvalidaException("El jugador no está registrado en el servidor.");
+        if (s == null) throw new SancionInvalidaException("La sanción no puede ser nula.");
+        if (!j.getUuid().equals(s.getJugadorId()))
+            throw new SancionInvalidaException("La sanción #" + s.getNumero() + " no corresponde a " + j.getNombre() + ".");
+        if (s.getResponsableId().equals(j.getUuid())) throw new SancionInvalidaException("No puedes sancionarte a ti mismo.");
+        if (!s.isActiva()) throw new SancionInvalidaException("No se puede aplicar una sanción revocada.");
+        if (buscarPorNumero(s.getNumero()) != null) throw new SancionInvalidaException("La sanción #" + s.getNumero() + " ya fue aplicada.");
+        if (s instanceof Baneo && obtenerBaneoActivo(j.getUuid(), Instant.now()).isPresent())
+            throw new SancionInvalidaException(j.getNombre() + " ya tiene un baneo activo.");
+        if (s instanceof Mute && estaMuteado(j.getUuid()))
+            throw new SancionInvalidaException(j.getNombre() + " ya está silenciado.");
+
+        try {
+            registrarYGuardar(s);
+        } catch (IOException exception) {
+            throw new SancionInvalidaException("No se pudo guardar la sanción: " + exception.getMessage());
+        }
+        s.aplicarEfecto(j); // polimorfismo: cada tipo hace algo distinto
+    }
+
+    /** Levanta (revoca) una sanción por su número, sin motivo. */
+    public synchronized boolean levantarSancion(int idSancion) {
+        return levantarSancion(idSancion, "Sin motivo especificado");
+    }
+
+    /**
+     * Levanta (revoca) una sanción por su número.
+     * @return true si se levantó; false si no existe, ya estaba revocada o no se pudo guardar.
+     */
+    public synchronized boolean levantarSancion(int idSancion, String motivoPerdon) {
+        Sancion s = buscarPorNumero(idSancion);
+        if (s == null || !s.isActiva()) return false;
+        try {
+            s.revocar(motivoPerdon);
+        } catch (SancionInvalidaException exception) {
+            return false;
+        }
+        sancionesActivas.remove(s);
+        if (!guardar()) {
+            s.restaurarActiva();
+            sancionesActivas.add(s);
+            plugin.getLogger().warning("No se pudo persistir la revocación de la sanción #" + idSancion + ".");
+            return false;
+        }
+        return true;
+    }
+
+    /** Busca una sanción por su número corto (#5). */
+    public synchronized Sancion buscarPorNumero(int numero) {
+        for (Sancion s : historial) if (s.getNumero() == numero) return s;
+        return null;
+    }
+
+    /** Todas las sanciones de un jugador (vigentes, vencidas y revocadas), la más reciente primero. */
+    public synchronized ArrayList<Sancion> obtenerSancionesPorJugador(String id) {
+        ArrayList<Sancion> resultado = new ArrayList<>();
+        for (Sancion s : historial) if (s.getJugadorId().toString().equalsIgnoreCase(id)) resultado.add(s);
+        resultado.sort(Comparator.comparing(Sancion::getCreadaEn).reversed());
+        return resultado;
+    }
+
+    public synchronized ArrayList<Sancion> obtenerSancionesPorJugador(UUID id) {
+        return obtenerSancionesPorJugador(id.toString());
+    }
+
+    /** Cuántas sanciones tiene el jugador sin haber sido perdonadas (las vencidas cuentan, las revocadas no). */
+    public synchronized int calcularReincidencia(Jugador j) {
+        if (j == null) return 0;
+        int cantidad = 0;
+        for (Sancion s : historial) if (s.getJugadorId().equals(j.getUuid()) && s.isActiva()) cantidad++;
+        return cantidad;
+    }
+
+    /** Traduce la reincidencia a un nivel legible. */
+    public String getNivelReincidencia(Jugador j) {
+        int cantidad = calcularReincidencia(j);
+        if (cantidad == 0) return "Sin antecedentes";
+        if (cantidad <= 2) return "Bajo";
+        if (cantidad <= 4) return "Medio";
+        return "Alto";
+    }
+
+    /** ¿El jugador está silenciado ahora mismo? (lo usa MuteEnforcementListener). */
+    public synchronized boolean estaMuteado(UUID jugadorId) {
+        return obtenerMuteActivo(jugadorId) != null;
+    }
+
+    public synchronized Mute obtenerMuteActivo(UUID jugadorId) {
+        limpiarExpiradas();
+        for (Sancion s : sancionesActivas)
+            if (s instanceof Mute mute && s.getJugadorId().equals(jugadorId)) return mute;
+        return null;
+    }
+
+    /** Saca de sancionesActivas las que ya vencieron (siguen en el historial). */
+    public synchronized void limpiarExpiradas() {
+        Instant ahora = Instant.now();
+        sancionesActivas.removeIf(s -> !s.estaVigente(ahora));
+    }
+
+    public synchronized ArrayList<Sancion> getSancionesActivas() {
+        limpiarExpiradas();
+        return new ArrayList<>(sancionesActivas);
+    }
+
+    public synchronized ArrayList<Sancion> getHistorial() {
+        return new ArrayList<>(historial);
+    }
+
+    // ------------------------------------------------------------------
+    // Persistencia
+    // ------------------------------------------------------------------
+
+    /** Guarda todo el historial en sanciones.txt. También se llama en onDisable(). */
+    public synchronized boolean guardar() {
+        ArrayList<String> lineas = new ArrayList<>();
+        for (Sancion s : historial) lineas.add(s.toLinea());
+        try {
+            persistencia.guardarRegistrosSanciones(lineas);
+            return true;
+        } catch (IOException exception) {
+            plugin.getLogger().log(Level.SEVERE, "No se pudo guardar " + ARCHIVO + ".", exception);
+            return false;
+        }
+    }
+
+    /** Agrega la sanción y la guarda; si no se puede guardar, la deshace. */
+    private void registrarYGuardar(Sancion s) throws IOException {
+        historial.add(s);
+        sancionesActivas.add(s);
+        if (!guardar()) {
+            historial.remove(s);
+            sancionesActivas.remove(s);
+            throw new IOException("No se pudo escribir " + ARCHIVO + ".");
+        }
+    }
+
+    /** Lee el formato actual y migra una sola vez el mapa de baneos del formato YAML anterior. */
+    private void cargar() {
+        try {
+            for (String linea : persistencia.cargarRegistrosSanciones()) {
+                try {
+                    historial.add(Sancion.desdeLinea(linea));
+                } catch (SancionInvalidaException exception) {
+                    plugin.getLogger().warning("Registro ignorado en " + ARCHIVO + ": " + exception.getMessage());
+                }
+            }
+            Set<UUID> idsCargados = new HashSet<>();
+            for (Sancion s : historial) idsCargados.add(s.getId());
+            int migrados = 0;
+            for (Baneo legado : persistencia.cargarBaneos()) {
+                if (idsCargados.add(legado.getId())) { historial.add(legado); migrados++; }
+            }
+            if (migrados > 0 && guardar()) plugin.getLogger().info("Se migraron " + migrados + " baneos al historial unificado.");
+        } catch (IOException exception) {
+            plugin.getLogger().log(Level.SEVERE, "No se pudo cargar el historial de sanciones.", exception);
+        }
+
+        // Los baneos repetidos de sanciones.yml que se descartaron gastaron números: se liberan.
+        int mayorNumero = 0;
+        for (Sancion s : historial) mayorNumero = Math.max(mayorNumero, s.getNumero());
+        Sancion.fijarContador(mayorNumero);
+
+        Instant ahora = Instant.now();
+        for (Sancion s : historial) if (s.estaVigente(ahora)) sancionesActivas.add(s);
+        plugin.getLogger().info("Se cargaron " + historial.size() + " sanciones (" + sancionesActivas.size() + " activas).");
     }
 }
