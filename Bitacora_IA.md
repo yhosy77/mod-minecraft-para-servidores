@@ -82,3 +82,21 @@ Para la primera versión se recomendó priorizar la creación del inventario de 
 
 **Conclusión:** La propuesta es técnicamente viable mediante Paper/Bukkit y permite relacionar los requerimientos del plugin con los conceptos de la segunda entrega académica: entidades de negocio, colecciones, operaciones CRUD y persistencia. Se recomienda conservar la idea del inventario gráfico, complementándola con un sistema de prioridades y una interfaz para gestionar los reportes individuales. Los criterios definitivos deberán validarse con los requerimientos del proyecto antes de su implementación.
 
+### Claude
+Contexto del problema:
+
+Al hacer merge de las ramas de todos los integrantes hacia main, surgieron conflictos de integración y errores de compilación. Teníamos varias clases con nombres de métodos distintos que intentaban conectarse entre sí, imports rotos y dudas sobre cuál era la mejor forma de estructurar la comunicación entre los módulos sin tener que reescribir la lógica que cada uno ya tenía avanzada.
+
+Prompt / Consulta realizada a la IA:
+
+"Estamos juntando las ramas de nuestro proyecto en equipo y el código no compila. Tenemos conflictos entre las clases de diferentes módulos porque cada uno nombró los métodos y parámetros de forma distinta, y además nos están saltando errores de referencia circular en los imports. No queremos rehacer todo desde cero, ¿cómo podemos conectar estas clases para que compilen bien y qué patrón o estructura nos recomiendas para que los módulos se comuniquen sin acoplarse tanto?"
+
+Resumen de la respuesta obtenida:
+
+La IA nos sugirió no modificar la lógica interna de cada integrante, sino crear una clase intermedia (tipo Controller o fachada) que se encargue de recibir los datos de un módulo, adaptarlos y pasárselos al otro. También nos explicó cómo resolver los errores de compilación organizando los imports y unificando las firmas de los métodos públicos en una interfaz común. Y Nos guio paso a paso para subir todo al github.
+
+Aplicación en el proyecto (Lo que hicimos nosotros):
+
+Lo que tomamos de la IA: Aplicamos la idea de la clase controladora para centralizar las llamadas entre módulos y seguimos su guía para limpiar los imports cruzados que bloqueaban la compilación.
+
+Lo que ajustamos manualmente: La IA propuso una estructura genérica que no contemplaba las validaciones específicas de nuestros datos ni los casos borde del proyecto. Tuvimos que adaptar manualmente los tipos de retorno, corregir los conflictos línea por línea en Git y ajustar la lógica de conexión para que respetara los requerimientos exactos de la entrega.
