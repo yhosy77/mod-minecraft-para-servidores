@@ -32,6 +32,7 @@ public final class SkillIssueAdmin extends JavaPlugin {
     private RankDisplayManager rankDisplayManager;
     private RankPermissionManager rankPermissionManager;
     private GestorSanciones gestorSanciones;
+    private GestorTransacciones gestorTransacciones;
 
     @Override
     public void onEnable() {
@@ -59,6 +60,11 @@ public final class SkillIssueAdmin extends JavaPlugin {
         registerCommand("profile", new ProfileCommand(gestorJugadores, gestorSanciones));
         registerCommand("jugador", new JugadorCommand(gestorJugadores));
         registerCommand("subirrango", new SubirRangoCommand(gestorJugadores, rankDisplayManager, rankPermissionManager));
+        // Donaciones y compras de rangos exclusivos
+        gestorTransacciones = new GestorTransacciones(this, persistenciaRangos);
+        registerCommand("donar", new DonarCommand(gestorTransacciones));
+        registerCommand("donaciones", new DonacionesCommand(gestorJugadores, gestorTransacciones));
+        registerCommand("comprarango", new ComprarRangoCommand(gestorJugadores, gestorTransacciones, rankDisplayManager, rankPermissionManager));
         getServer().getOnlinePlayers().forEach(player -> {
             gestorJugadores.registrarOActualizarJugador(player);
             rankPermissionManager.apply(player);

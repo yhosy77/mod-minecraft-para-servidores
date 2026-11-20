@@ -24,6 +24,15 @@ commands:
   subirrango:
     description: Sube gratis al rango Miembro con nivel 10 o 500 monedas
     usage: /subirrango
+  donar:
+    description: Registra una donación al servidor (no da recompensas)
+    usage: /donar <monto> [mensaje]
+  donaciones:
+    description: Muestra el total donado en un periodo (solo ADMIN)
+    usage: /donaciones [días]
+  comprarango:
+    description: Registra la compra de un rango exclusivo (solo ADMIN)
+    usage: /comprarango <jugador> <rango> <valor>
   ban:
     description: Abre el asistente gráfico para aplicar una sanción
     usage: /ban
