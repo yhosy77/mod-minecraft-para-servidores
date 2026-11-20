@@ -23,6 +23,7 @@ import ErrorCapa8.skillIssueAdmin.Sanctions.MuteEnforcementListener;
 import ErrorCapa8.skillIssueAdmin.Sanctions.PerdonarCommand;
 import ErrorCapa8.skillIssueAdmin.Sanctions.SancionesCommand;
 import ErrorCapa8.skillIssueAdmin.Sanctions.WarnCommand;
+import ErrorCapa8.skillIssueAdmin.listeners.connectionListener;
 
 public final class SkillIssueAdmin extends JavaPlugin {
     private ReportCreationManager reportManager;
@@ -61,6 +62,7 @@ public final class SkillIssueAdmin extends JavaPlugin {
             rankPermissionManager.apply(player);
             rankDisplayManager.refreshPlayer(player);
         });
+        getServer().getPluginManager().registerEvents(new connectionListener(), this);
         getLogger().info("Skill Issue Admin habilitado.");
     }
 
