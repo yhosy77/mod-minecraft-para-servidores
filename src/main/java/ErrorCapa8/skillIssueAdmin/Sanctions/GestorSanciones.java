@@ -68,11 +68,17 @@ public final class GestorSanciones {
         if (obtenerBaneoActivo(draft.getJugadorId(), Instant.now()).isPresent())
             throw new IllegalArgumentException("El jugador ya tiene un baneo activo.");
 
+        // RF-07 / RF-08: si el jugador reincide, un baneo temporal sube a permanente.
+        Jugador jugador = gestorJugadores.buscarJugador(target.getUniqueId());
+        boolean permanente = draft.getDuracion() == DuracionBaneo.PERMANENTE;
+        NivelSeveridad pedido = permanente ? NivelSeveridad.BANEO_PERMANENTE : NivelSeveridad.BANEO_TEMPORAL;
+        if (calcularNivelSugerido(jugador, draft.getCausa(), pedido).nivel() == NivelSeveridad.BANEO_PERMANENTE) permanente = true;
+
         Instant createdAt = Instant.now();
-        Instant expiresAt = draft.getDuracion().calcularExpiracion(createdAt);
+        Instant expiresAt = permanente ? null : draft.getDuracion().calcularExpiracion(createdAt);
         Baneo baneo = new Baneo(UUID.randomUUID(), target.getUniqueId(), target.getName(), draft.getCausa(),
                 draft.getDetalleCausa(), draft.getMensaje(), administrador.getUniqueId(), administrador.getName(),
-                createdAt, expiresAt, draft.getDuracion() == DuracionBaneo.PERMANENTE);
+                createdAt, expiresAt, permanente);
         registrarYGuardar(baneo);
 
         // Polimorfismo: el efecto lo decide la propia sanción (Baneo -> kick).
@@ -134,6 +140,13 @@ public final class GestorSanciones {
             plugin.getLogger().warning("No se pudo persistir la revocación de la sanción #" + idSancion + ".");
             return false;
         }
+        // RF-07: tras el perdón, el jugador queda "Advertido" durante el periodo de prueba.
+        Player player = Bukkit.getPlayer(s.getJugadorId());
+        if (player != null) {
+            player.sendMessage(net.kyori.adventure.text.Component.text("Tu sanción #" + idSancion + " fue revocada. Quedas en estado Advertido durante "
+                    + PERIODO_PRUEBA_DIAS + " días: si reincides en lo mismo, la sanción será más severa.",
+                    net.kyori.adventure.text.format.NamedTextColor.YELLOW));
+        }
         return true;
     }
 
@@ -155,24 +168,93 @@ public final class GestorSanciones {
         return obtenerSancionesPorJugador(id.toString());
     }
 
-    /** Cuántas sanciones tiene el jugador sin haber sido perdonadas (las vencidas cuentan, las revocadas no). */
+    // ------------------------------------------------------------------
+    // Reincidencia y periodo de prueba (RF-07, RF-08)
+    // ------------------------------------------------------------------
+
+    /** Días que dura el estado "Advertido" después de revocar una sanción (RF-07). */
+    public static final int PERIODO_PRUEBA_DIAS = 30;
+    /** Ventana de tiempo que se mira para la reincidencia (RF-08). */
+    public static final int VENTANA_REINCIDENCIA_DIAS = 60;
+    /** A partir de cuántas sanciones en la ventana sube la severidad sugerida (RF-08). */
+    public static final int UMBRAL_REINCIDENCIA = 3;
+
+    /** Nivel sugerido para una sanción nueva y las razones por las que subió (si subió). */
+    public record SugerenciaSeveridad(NivelSeveridad nivel, List<String> razones) {
+        public boolean subio() { return !razones.isEmpty(); }
+    }
+
+    /** Sanciones no revocadas que recibió el jugador en los últimos 60 días (RF-08). */
     public synchronized int calcularReincidencia(Jugador j) {
         if (j == null) return 0;
+        Instant desde = Instant.now().minus(VENTANA_REINCIDENCIA_DIAS, java.time.temporal.ChronoUnit.DAYS);
         int cantidad = 0;
-        for (Sancion s : historial) if (s.getJugadorId().equals(j.getUuid()) && s.isActiva()) cantidad++;
+        for (Sancion s : historial)
+            if (s.getJugadorId().equals(j.getUuid()) && s.isActiva() && !s.getCreadaEn().isBefore(desde)) cantidad++;
         return cantidad;
     }
 
-    /** Traduce la reincidencia a un nivel legible. */
+    /** Texto para /sanciones y /profile. */
     public String getNivelReincidencia(Jugador j) {
         int cantidad = calcularReincidencia(j);
-        if (cantidad == 0) return "Sin antecedentes";
-        if (cantidad <= 2) return "Bajo";
-        if (cantidad <= 4) return "Medio";
-        return "Alto";
+        if (cantidad == 0) return "Sin antecedentes en los últimos " + VENTANA_REINCIDENCIA_DIAS + " días";
+        if (cantidad < UMBRAL_REINCIDENCIA) return cantidad + " sanción(es) en " + VENTANA_REINCIDENCIA_DIAS + " días";
+        return cantidad + " sanciones en " + VENTANA_REINCIDENCIA_DIAS + " días: reincidente, la severidad sube un nivel";
     }
 
-    /** ¿El jugador está silenciado ahora mismo? (lo usa MuteEnforcementListener). */
+    /** Fin del periodo de prueba del jugador (la revocación más reciente + 30 días), o null si no está en prueba. */
+    public synchronized Instant finPeriodoDePrueba(UUID jugadorId) {
+        Instant ahora = Instant.now();
+        Instant fin = null;
+        for (Sancion s : historial) {
+            if (!s.getJugadorId().equals(jugadorId) || s.getRevocadaEn() == null) continue;
+            Instant finEsta = s.getRevocadaEn().plus(PERIODO_PRUEBA_DIAS, java.time.temporal.ChronoUnit.DAYS);
+            if (finEsta.isAfter(ahora) && (fin == null || finEsta.isAfter(fin))) fin = finEsta;
+        }
+        return fin;
+    }
+
+    public boolean estaEnPeriodoDePrueba(UUID jugadorId) { return finPeriodoDePrueba(jugadorId) != null; }
+
+    /**
+     * Calcula qué tan severa debe ser una sanción nueva:
+     * - RF-08: con 3 o más sanciones no revocadas en 60 días, sube un nivel.
+     * - RF-07: si está en periodo de prueba por una sanción revocada del mismo tipo de infracción, sube un nivel.
+     */
+    public synchronized SugerenciaSeveridad calcularNivelSugerido(Jugador j, CausaBaneo tipoInfraccion, NivelSeveridad pedido) {
+        NivelSeveridad nivel = pedido;
+        List<String> razones = new ArrayList<>();
+        if (j == null) return new SugerenciaSeveridad(nivel, razones);
+        if (calcularReincidencia(j) >= UMBRAL_REINCIDENCIA) {
+            nivel = nivel.subir();
+            razones.add("reincidencia (" + calcularReincidencia(j) + " sanciones en " + VENTANA_REINCIDENCIA_DIAS + " días)");
+        }
+        Instant ahora = Instant.now();
+        for (Sancion s : historial) {
+            if (!s.getJugadorId().equals(j.getUuid()) || s.getRevocadaEn() == null || tipoInfraccion == null) continue;
+            boolean enPrueba = s.getRevocadaEn().plus(PERIODO_PRUEBA_DIAS, java.time.temporal.ChronoUnit.DAYS).isAfter(ahora);
+            if (enPrueba && s.getTipoInfraccion() == tipoInfraccion) {
+                nivel = nivel.subir();
+                razones.add("periodo de prueba por " + tipoInfraccion.etiqueta() + " (sanción #" + s.getNumero() + " revocada)");
+                break;
+            }
+        }
+        if (nivel == pedido) razones.clear();
+        return new SugerenciaSeveridad(nivel, razones);
+    }
+
+    /** Estado del jugador para /profile y /sanciones: Sancionado, Advertido (en prueba) o sin sanciones (RF-03, RF-07). */
+    public synchronized String estadoJugador(UUID jugadorId) {
+        Instant ahora = Instant.now();
+        for (Sancion s : historial)
+            if (s.getJugadorId().equals(jugadorId) && s.estaVigente(ahora) && s.getNivelEnEscala() != null)
+                return "Sancionado (" + s.getNivelEnEscala().etiqueta() + ")";
+        Instant finPrueba = finPeriodoDePrueba(jugadorId);
+        if (finPrueba != null) return "Advertido hasta " + Sancion.FORMATO_FECHA.format(finPrueba);
+        return "Sin sanciones vigentes";
+    }
+
+    /** ¿El jugador está silenciado ahora mismo? (lo usa ModeracionListener). */
     public synchronized boolean estaMuteado(UUID jugadorId) {
         return obtenerMuteActivo(jugadorId) != null;
     }
