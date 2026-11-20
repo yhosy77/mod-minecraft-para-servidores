@@ -272,7 +272,10 @@ Minecraft no permite abrir ventanas propias (Swing/JavaFX) en el cliente. La int
 | **Validación asincrónica** | Al enviar: `ComandoBase` revisa jugador y permisos, y los gestores revisan las reglas (motivo vacío, duración ≤ 0, auto-reporte, NickName inválido, estado no permitido) y responden con un mensaje claro en rojo. El texto del chat llega en un hilo aparte (`AsyncChatEvent`) y se procesa luego en el hilo principal. |
 
 ### 7.12 Diseño UML
-El diagrama de clases está en [Diagrama_UML.md](Diagrama_UML.md) (Mermaid). **Pendiente:** actualizarlo con las clases agregadas en la Entrega 3 (`ComandoBase`, `ComandoAdministrativo`, `EstadoReporte`, `CriterioFiltro`, `NivelSeveridad`, `GestorTransacciones`, `JugadorCommand`, `SubirRangoCommand`, `EstadisticasCommand`, `ModeracionListener`…), para que coincida 1:1 con el código.
+El diagrama de clases está en [Diagrama_UML.md](Diagrama_UML.md) (Mermaid) y coincide 1:1 con el código de la Entrega 3:
+* Tiene un **diagrama general** con las clases principales.
+* Tiene **8 diagramas detallados** por módulo, con todos los atributos, métodos, parámetros, visibilidades, estáticos y abstractos.
+* Muestra todas las relaciones: herencia, implementación, asociación, agregación, clases anidadas y dependencias, incluidas las excepciones que lanza cada clase.
 
 ---
 
